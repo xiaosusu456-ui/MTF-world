@@ -12,7 +12,7 @@ API_URL = "https://2345.desuwa.org/api/search"
 def search():
     query = request.args.get('q', '')
     offset = request.args.get('offset', 0) # 接收偏移量
-    limit = request.args.get('limit', 10)  # 接收每页数量
+    limit = request.args.get('limit', 20)  # 接收每页数量
     
     if not query:
         return jsonify({"results": []})
