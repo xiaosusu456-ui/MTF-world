@@ -9,7 +9,7 @@ CORS(app)
 # ========== 双路同构 API 配置 (完美一致) ==========
 # 1. 主站 (Desuwa)
 API_A = "https://2345.desuwa.org/api/search"
-TOKEN_A = "T0MQ1gyMo2J5AN65xK6B3VJmRhV0aBAtTNn_JuEtRBY"
+TOKEN_A = "-IoOOzo5eeZK3wpYc3SCdyQwQ5WqyfTpY8apFYcG5Sc"
 
 # 2. 备份站 (跨环 - 经文档确认，与主站接口完全一致)
 API_B = "https://search.transcircle.org/api/search"
