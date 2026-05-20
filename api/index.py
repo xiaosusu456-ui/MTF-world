@@ -8,7 +8,7 @@ CORS(app)
 
 # ========== 双实例配置 (同构 API) ==========
 API_A = "https://2345.desuwa.org/api/search"
-TOKEN_A = "T0MQ1gyMo2J5AN65xK6B3VJmRhV0aBAtTNn_JuEtRBY"
+TOKEN_A = "-IoOOzo5eeZK3wpYc3SCdyQwQ5WqyfTpY8apFYcG5Sc"
 
 API_B = "https://search.transcircle.org/api/search"
 TOKEN_B = "mmILttPgObLRhUVw-Q8azTYkMLsGhFYZy79vIW8rW9E"
