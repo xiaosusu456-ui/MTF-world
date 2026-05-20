@@ -1,16 +1,19 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import requests
-import concurrent.futures  # 【新增】引入并发库
+import concurrent.futures
 
 app = Flask(__name__)
 CORS(app)
 
-# ========== 双实例配置 (同构 API) ==========
+# ========== 双路不同构 API 配置 ==========
+# 1. 主站 (Desuwa 自定义 GET 接口)
 API_A = "https://2345.desuwa.org/api/search"
 TOKEN_A = "-IoOOzo5eeZK3wpYc3SCdyQwQ5WqyfTpY8apFYcG5Sc"
 
-API_B = "https://search.transcircle.org/api/search"
+# 2. 备份站 (跨环 官方原生 Meilisearch POST 接口)
+# 跨环是原生实例，基础路径是 /api/，标准检索路径是 /api/indexes/pages/search
+API_B = "https://search.transcircle.org/api/indexes/pages/search"
 TOKEN_B = "mmILttPgObLRhUVw-Q8azTYkMLsGhFYZy79vIW8rW9E"
 
 
@@ -23,14 +26,12 @@ def search():
     script = request.args.get('script', 'all')
     domain = request.args.get('domain', '').strip()
     tags = request.args.get('tags', '').strip()
-    
-    # 接收前端传来的模式：'quota' (次数优先) 或 'speed' (效率优先)
     mode = request.args.get('mode', 'quota')
     
     if not query:
         return jsonify({"results": [], "total": 0})
 
-    # 通用参数包
+    # 通用过滤参数
     params = {
         "q": query,
         "lang": lang,
@@ -39,99 +40,99 @@ def search():
     if domain: params["domain"] = domain
     if tags: params["tags"] = tags
 
-    # ================== 模式一：次数优先 (串行热备，仅消耗 1 次额度) ==================
+    # ================== 1. 次数优先模式 (串行热备，仅消耗 1 次额度) ==================
     if mode == 'quota':
-        params["limit"] = limit
-        params["offset"] = offset
-        
-        # 尝试主站
+        # 尝试主站 (GET)
         try:
-            headers_a = {"Authorization": f"Bearer {TOKEN_A}"}
-            resp = requests.get(API_A, params=params, headers=headers_a, timeout=5)
+            p = params.copy()
+            p["limit"] = limit
+            p["offset"] = offset
+            headers = {"Authorization": f"Bearer {TOKEN_A}"}
+            resp = requests.get(API_A, params=p, headers=headers, timeout=5)
             if resp.status_code == 200:
                 return jsonify(resp.json())
         except Exception:
             pass
 
-        # 主站失败，无缝降级备份站
+        # 主站失效，降级至备份站 (POST)
         try:
-            headers_b = {"Authorization": f"Bearer {TOKEN_B}"}
-            resp_b = requests.get(API_B, params=params, headers=headers_b, timeout=5)
-            if resp_b.status_code == 200:
-                return jsonify(resp_b.json())
-            else:
-                return jsonify({"error": f"主备实例均失效。"}), resp_b.status_code
-        except Exception as e:
-            return jsonify({"error": str(e)}), 500
+            headers_b = {
+                "Authorization": f"Bearer {TOKEN_B}",
+                "Content-Type": "application/json"
+            }
+            json_data = {
+                "q": query, "limit": limit, "offset": offset,
+                "attributesToHighlight": ["title", "content"]
+            }
+            # 拼接 Meilisearch 过滤器
+            filters = []
+            if domain: filters.append(f"domain = '{domain}'")
+            if lang and lang != 'all': filters.append(f"lang = '{lang}'")
+            if filters: json_data["filter"] = " AND ".join(filters)
 
-    # ================== 模式二：效率优先 (双路并发，一次拉取 40 条/4 页，消耗 2 次额度) ==================
+            resp_b = requests.post(API_B, json=json_data, headers=headers_b, timeout=5)
+            if resp_b.status_code == 200:
+                raw_data = resp_b.json()
+                return jsonify({
+                    "results": raw_data.get("hits", []),
+                    "total": raw_data.get("totalHits", len(raw_data.get("hits", [])))
+                })
+        except Exception as e:
+            return jsonify({"error": f"两路均失败: {str(e)}"}), 500
+
+    # ================== 2. 效率优先模式 (双路并发，拉取 40 条/4 页) ==================
     elif mode == 'speed':
-        # 定义一个内部线程任务：去特定实例拉取 20 条
-        def fetch_task(api_url, token, offset_val):
+        
+        # 线程 A：请求主站 (GET)
+        def fetch_a(offset_val):
             p = params.copy()
-            p["limit"] = 20  # 强制单次上限 20
+            p["limit"] = 20
             p["offset"] = offset_val
-            h = {"Authorization": f"Bearer {token}"}
+            headers = {"Authorization": f"Bearer {TOKEN_A}"}
             try:
-                r = requests.get(api_url, params=p, headers=h, timeout=5)
+                r = requests.get(API_A, params=p, headers=headers, timeout=5)
                 if r.status_code == 200:
                     return r.json().get("results", [])
             except Exception:
                 pass
             return []
 
-        # 开启多线程并发（ThreadPoolExecutor 非常轻量，完美适配 Vercel）
-        with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
-            # 线程 1：去主站拉取前 20 条 (第 1-2 页)
-            future_a = executor.submit(fetch_task, API_A, TOKEN_A, offset)
-            # 线程 2：同一时间去备份站拉取后 20 条 (第 3-4 页)
-            future_b = executor.submit(fetch_task, API_B, TOKEN_B, offset + 20)
+        # 线程 B：请求备份站 (POST)
+        def fetch_b(offset_val):
+            headers = {
+                "Authorization": f"Bearer {TOKEN_B}",
+                "Content-Type": "application/json"
+            }
+            json_data = {
+                "q": query, "limit": 20, "offset": offset_val,
+                "attributesToHighlight": ["title", "content"]
+            }
+            filters = []
+            if domain: filters.append(f"domain = '{domain}'")
+            if lang and lang != 'all': filters.append(f"lang = '{lang}'")
+            if filters: json_data["filter"] = " AND ".join(filters)
+            
+            try:
+                r = requests.post(API_B, json=json_data, headers=headers, timeout=5)
+                if r.status_code == 200:
+                    # 原生返回的是 hits，直接在这里作为结果返回
+                    return r.json().get("hits", [])
+            except Exception:
+                pass
+            return []
 
-            # 等待双路结果返回
+        # 并发执行
+        with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
+            future_a = executor.submit(fetch_a, offset)
+            future_b = executor.submit(fetch_b, offset + 20)
+
             results_a = future_a.result()
             results_b = future_b.result()
 
-        # 合并两路数据，一次性拿到 40 条结果
-        combined_results = results_a + results_b
-        
+        combined = results_a + results_b
         return jsonify({
-            "results": combined_results,
-            "total": len(combined_results) # 近似总数
+            "results": combined,
+            "total": len(combined)
         })
 
-    return jsonify({"results": [], "total": 0})        "lang": lang,
-        "script": script,
-        "domain": domain,
-        "tags": tags
-    }
-
-    # ================== 第一路：尝试请求 实例 A (Desuwa) ==================
-    try:
-        headers_a = {"Authorization": f"Bearer {TOKEN_A}"}
-        resp = requests.get(API_A, params=params, headers=headers_a, timeout=5)
-        
-        if resp.status_code == 200:
-            return jsonify(resp.json())
-        else:
-            print(f"实例 A 返回异常码 {resp.status_code}，正在自动切换至实例 B...")
-    except Exception as e:
-        print(f"实例 A 请求异常: {str(e)}，正在自动切换至实例 B...")
-
-
-    # ================== 第二路：无缝切换至 实例 B (跨环) ==================
-    try:
-        headers_b = {"Authorization": f"Bearer {TOKEN_B}"}
-        resp_b = requests.get(API_B, params=params, headers=headers_b, timeout=5)
-        
-        if resp_b.status_code == 200:
-            print("成功无缝切换至 实例 B (TransCircle)")
-            return jsonify(resp_b.json())
-        else:
-            return jsonify({"error": f"主备实例均失效。实例 B 状态码: {resp_b.status_code}"}), resp_b.status_code
-            
-    except Exception as e:
-        return jsonify({"error": f"主备实例均请求失败。实例 B 异常: {str(e)}"}), 500        
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-# Vercel 环境下不需要 app.run()
+    return jsonify({"results": [], "total": 0})
