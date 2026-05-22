@@ -98,3 +98,19 @@ def search():
             "results": combined,
             "total": len(combined)
         })
+
+# ========== 🌟 远程更新检测路由 (V2.7 预留) ==========
+@app.route('/version.json')
+def get_version():
+    return jsonify({
+        "version": "2.7.0",
+  "title": "发现新版本 V2.7.0！",
+  "changelog": [
+    "1. 背景变更为渐变跨性别三色旗",
+    "2. 加入3个网站，查询更全面",
+    "3. 加入建议功能"
+    "4. 在HRT界面中加入给药模拟"
+    "5. 完善了激素单位转换"
+  ],
+  "downloadUrl": "https://github.com/xiaosusu456-ui/MTF-world/releases" # 【未来新版本的下载直链】
+    })
