@@ -1,9 +1,12 @@
-# MTF World · HRT 伴侣 (v2.6.0)
+# MTF World · HRT 伴侣 (v2.7.0)
 
 专为跨性别女性（MTF）社群打造的个人综合工具与云端资源检索系统。
 
 作者:xiaosuda
+
 x:@xiaosusu456
+
+discord:xiaosusua
 
 ## ✨ 核心特性
 - 🔍 **双路并发云端搜索**：集成极速多页模式，双路线程并发出击，零延迟体验。
