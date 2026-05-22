@@ -1,0 +1,3154 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>MTF World</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Noto Sans SC', 'system-ui', 'sans-serif'],
+                    },
+                    colors: {
+                        pink: {
+                            50: '#fdf2f8',
+                            100: '#fce7f3',
+                            200: '#fbcfe8',
+                            300: '#f9a8d4',
+                            400: '#f472b6',
+                            500: '#ec4899',
+                            600: '#db2777',
+                            700: '#be185d',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        :root {
+    --primary-gradient: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%);
+    --glass-bg: rgba(255, 255, 255, 0.75);
+    --glass-border: rgba(255, 255, 255, 0.4);
+    --shadow-sm: 0 4px 12px rgba(236, 72, 153, 0.05);
+    --shadow-md: 0 8px 24px rgba(236, 72, 153, 0.1);
+    --shadow-lg: 0 16px 48px rgba(236, 72, 153, 0.15);
+}
+
+* {
+    -webkit-tap-highlight-color: transparent;
+    /* 让所有交互都有平滑缩放感 */
+    transition: background-color 0.3s ease, border-color 0.3s ease, transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+body {
+    font-family: 'Noto Sans SC', system-ui, sans-serif;
+    /* 🌟 加深版跨儿三色渐变：色彩更鲜明 */
+    background: linear-gradient(
+        135deg,
+        rgba(91, 206, 250, 0.35) 0%,   /* 显色跨儿蓝 */
+        rgba(255, 255, 255, 0.85) 30%,  /* 柔白过渡 */
+        rgba(245, 169, 184, 0.35) 70%,  /* 显色跨儿粉 */
+        rgba(91, 206, 250, 0.15) 100%   /* 浅蓝收尾 */
+    ) no-repeat fixed;
+    min-height: 100vh;
+    padding-bottom: calc(100px + env(safe-area-inset-bottom));
+    color: #1f2937;
+}
+
+.glass {
+    background: var(--glass-bg);
+    backdrop-filter: blur(16px) saturate(180%);
+    -webkit-backdrop-filter: blur(16px) saturate(180%);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--shadow-sm);
+}
+
+.card-hover:hover {
+    transform: translateY(-4px) scale(1.01);
+    box-shadow: var(--shadow-lg);
+}
+
+        .glass-strong {
+            background: rgba(255, 255, 255, 0.88);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.7);
+        }
+
+        .tab-content {
+            display: none;
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.35s ease, transform 0.35s ease;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .tab-content.active.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        nav.fixed {
+    bottom: 1.5rem !important;
+    left: 1.2rem !important;
+    right: 1.2rem !important;
+    height: 4.2rem;
+    border-radius: 2.2rem;
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+}
+
+.nav-item.active {
+    color: #ec4899;
+    transform: translateY(-2px) scale(1.1);
+}
+
+/* 那个大圆搜索按钮的特殊修正 */
+button[onclick*="tab-search"] .absolute {
+    background: var(--primary-gradient) !important;
+    box-shadow: 0 8px 20px rgba(236, 72, 153, 0.4) !important;
+    top: -1.8rem !important;
+    width: 3.6rem !important;
+    height: 3.6rem !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+        .card-hover {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 40px rgba(236, 72, 153, 0.12);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #ec4899 0%, #db2777 100%);
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 16px rgba(236, 72, 153, 0.3);
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 24px rgba(236, 72, 153, 0.4);
+        }
+        
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        .pill {
+            transition: all 0.2s ease;
+        }
+        
+        .pill.active {
+            background: linear-gradient(135deg, #ec4899, #db2777);
+            color: white;
+            box-shadow: 0 2px 8px rgba(236, 72, 153, 0.3);
+        }
+
+        .term-card {
+            transition: all 0.25s ease;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+        }
+        
+        .term-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+            border-color: rgba(236, 72, 153, 0.2);
+        }
+
+        .progress-ring {
+            transform: rotate(-90deg);
+        }
+        
+        .progress-ring-circle {
+            transition: stroke-dashoffset 0.5s ease;
+        }
+
+        /* Custom Range Slider */
+        input[type=range] {
+            -webkit-appearance: none;
+            background: transparent;
+        }
+        
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 20px;
+            width: 20px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #ec4899, #db2777);
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(236, 72, 153, 0.4);
+            margin-top: -8px;
+        }
+        
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            cursor: pointer;
+            background: #fce7f3;
+            border-radius: 2px;
+        }
+
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        .timeline-dot {
+            box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.8);
+        }
+
+        @keyframes pulse-soft {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        .animate-pulse-soft {
+            animation: pulse-soft 2s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-6px); }
+        }
+        
+        .animate-float {
+            animation: float 3s ease-in-out infinite;
+        }
+
+        .med-card {
+            transition: all 0.2s ease;
+        }
+        
+        .med-card.taken {
+            opacity: 0.6;
+            background: #f3f4f6;
+        }
+        
+        .med-card.taken .med-status {
+            text-decoration: line-through;
+            color: #9ca3af;
+        }
+
+        .check-item {
+            transition: all 0.2s ease;
+        }
+        
+        .check-item:hover {
+            background: rgba(236, 72, 153, 0.05);
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(255,255,255,0.7));
+            border: 1px solid rgba(255,255,255,0.6);
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 100;
+            background: rgba(0,0,0,0.4);
+            backdrop-filter: blur(4px);
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+        
+        .modal.show {
+            display: flex;
+        }
+        
+        .modal-content {
+            animation: modalIn 0.3s ease;
+        }
+        
+        @keyframes modalIn {
+            from { opacity: 0; transform: scale(0.95) translateY(10px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        .calendar-day {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 0.75rem;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        #pagination {
+    margin-top: -8px; /* 让它稍微贴近上方的搜索卡片 */
+    margin-bottom: 8px;
+        }
+        #pagination span {
+    background: rgba(255, 255, 255, 0.5); /* 稍微透明一点 */
+    min-width: 3rem;
+    text-align: center;
+        }
+        
+       
+        .search-content em {
+    font-style: normal;
+    font-weight: 700;
+    color: #ec4899; 
+    background: rgba(236, 72, 153, 0.05);
+    padding: 0 2px;
+    border-radius: 4px;
+        }
+        
+        #pagination button {
+    transition: all 0.2s ease;
+        }
+        #pagination button:active {
+    transform: scale(0.9);
+    background: #fce7f3;
+        }
+        .search-content em {
+    color: #ec4899;
+    font-weight: bold;
+    font-style: normal;
+        }
+
+        .card-hover {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .calendar-day:hover:not(.empty) {
+            background: #fce7f3;
+        }
+        
+        .calendar-day.has-record {
+            background: linear-gradient(135deg, #fce7f3, #fdf2f8);
+            color: #db2777;
+            font-weight: 600;
+        }
+        
+        .calendar-day.today {
+            border: 2px solid #ec4899;
+            font-weight: 700;
+        }
+        
+        /* 搜索关键词：荧光笔高亮效果 */
+        .search-content em {
+            font-style: normal;
+            font-weight: 800;
+            color: #db2777;
+            background: rgba(236, 72, 153, 0.15);
+            padding: 1px 4px;
+            margin: 0 1px;
+            border-radius: 4px;
+}
+
+/* 列表渲染动画 */
+        #globalResults > div {
+            animation: fadeInUp 0.5s ease backwards;
+}
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+}
+
+/* 页码按钮精致化 */
+        #pagination button {
+            background: white;
+            border: 1px solid #fce7f3;
+            color: #ec4899;
+            width: 2.8rem;
+            height: 2.8rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 1rem;
+}
+
+        #pagination span {
+            background: var(--primary-gradient);
+            color: white;
+            padding: 0.5rem 1.5rem;
+            border-radius: 1rem;
+            font-weight: 900;
+}
+
+/* 每日鼓励语专属字体 */
+        #dailyQuote {
+            font-weight: 500;
+            letter-spacing: 0.02em;
+            background: linear-gradient(90deg, #f472b6, #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+}
+
+        /* --- 按钮与交互组件：轻盈透明化优化 --- */
+
+/* 1. 全局主按钮（彩色玻璃感） */
+.btn-primary {
+    background: linear-gradient(135deg, rgba(236, 72, 153, 0.7), rgba(139, 92, 246, 0.7)) !important;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    box-shadow: 0 8px 20px rgba(236, 72, 153, 0.15) !important;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, rgba(236, 72, 153, 0.85), rgba(139, 92, 246, 0.85)) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 12px 24px rgba(236, 72, 153, 0.25) !important;
+}
+
+/* 2. 搜索框与筛选下拉框（极度透气） */
+input, select, textarea {
+    background: rgba(255, 255, 255, 0.4) !important; /* 调低底色白度 */
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.5) !important;
+    color: #4b5563 !important;
+}
+
+input::placeholder {
+    color: rgba(156, 163, 175, 0.7);
+}
+
+/* 3. 分页按钮（透明圆润） */
+#pagination button {
+    background: rgba(255, 255, 255, 0.3) !important;
+    backdrop-filter: blur(4px);
+    border: 1px solid rgba(255, 255, 255, 0.4) !important;
+    color: #ec4899 !important;
+}
+
+#pagination span {
+    background: linear-gradient(135deg, rgba(236, 72, 153, 0.6), rgba(139, 92, 246, 0.6)) !important;
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* 4. 底部导航栏进一步通透 */
+nav.fixed {
+    background: rgba(255, 255, 255, 0.65) !important; /* 降低导航栏厚度 */
+    border: 1px solid rgba(255, 255, 255, 0.4) !important;
+}
+
+/* 5. 侧边术语 Pill 标签 */
+.pill {
+    background: rgba(255, 255, 255, 0.4) !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+}
+
+.pill.active {
+    background: var(--primary-gradient) !important;
+    opacity: 0.85; /* 激活状态也带一点点透 */
+}
+
+/* 6. 特殊：那个中间的“探索”浮动大按钮 */
+button[onclick*="tab-search"] .absolute {
+    opacity: 0.9;
+    border: 2px solid rgba(255, 255, 255, 0.5) !important;
+}
+       /* --- 🌙 深色模式自动化适配 (v2.5) --- */
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        /* 深色背景下的玻璃颜色 */
+        --glass-bg: rgba(15, 23, 42, 0.65); /* 深蓝色底 */
+        --glass-border: rgba(255, 255, 255, 0.1);
+        --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.3);
+        --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.4);
+    }
+
+    body {
+        /* 🌟 深色加深版：暗夜荧光感更强 */
+        background: linear-gradient(
+            135deg,
+            #0f172a 0%,                      /* 深蓝底 */
+            rgba(91, 206, 250, 0.12) 30%,    /* 显色暗蓝光 */
+            rgba(245, 169, 184, 0.12) 70%,    /* 显色暗粉光 */
+            #020617 100%                     /* 极深底 */
+        ) no-repeat fixed !important;
+        color: #f1f5f9 !important;
+    }
+
+    /* 标题与文字颜色适配 */
+    .text-gray-800, .text-gray-700, .text-gray-600 {
+        color: #f1f5f9 !important;
+    }
+    
+    .text-gray-400, .text-gray-500 {
+        color: #94a3b8 !important; /* 辅助文字变亮 */
+    }
+
+    /* 卡片背景微调 */
+    .bg-white\/40, .bg-white\/50, .bg-white\/60, .bg-white\/80 {
+        background: rgba(30, 41, 59, 0.5) !important;
+        border: 1px solid rgba(255, 255, 255, 0.05) !important;
+    }
+
+    /* 输入框与下拉框适配 */
+    input, select, textarea {
+        background: rgba(15, 23, 42, 0.6) !important;
+        color: #f1f5f9 !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    }
+
+    /* 底部导航栏适配 */
+    nav.fixed {
+        background: rgba(15, 23, 42, 0.8) !important;
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+        box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.5) !important;
+    }
+
+    /* 搜索结果 em 高亮（深色模式下更亮一点） */
+    .search-content em {
+        color: #f472b6 !important; /* 亮粉色 */
+        background: rgba(244, 114, 182, 0.15) !important;
+    }
+
+    /* 隐私锁适配 */
+    #privacyLock {
+        background: rgba(2, 6, 23, 0.85) !important;
+    }
+
+    /* 术语卡片背景 */
+    .term-card {
+        background: rgba(30, 41, 59, 0.6) !important;
+        border-color: rgba(255, 255, 255, 0.05) !important;
+    }
+
+    /* 重点渐变修正（防止过暗） */
+    .from-pink-50, .from-blue-50, .from-purple-50 {
+        --tw-gradient-from: rgba(30, 41, 59, 0.8) !important;
+    }
+}
+    /* --- 🛠️ 搜索结果错位终极修复 --- */
+
+/* 1. 确保结果容器是块级布局，且撑满全屏 */
+#globalResults {
+    display: block !important; 
+    width: 100% !important;
+    margin: 1.5rem 0 !important;
+    padding: 0 !important;
+}
+
+/* 2. 确保每一张搜索卡片都是独占一行，且不被压缩 */
+#globalResults > div {
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    box-sizing: border-box !important;
+}
+
+/* 3. 修复标题区域的挤压问题 */
+#globalResults .flex.justify-between {
+    display: flex !important;
+    flex-direction: row !important; /* 强制横向排列标题和星星 */
+    align-items: flex-start !important;
+    width: 100% !important;
+}
+
+/* 4. 强制标题文字换行逻辑正常 */
+#globalResults h4 {
+    white-space: normal !important; /* 允许正常换行 */
+    word-break: break-all !important; /* 允许长单词断行 */
+    flex: 1 !important; /* 占据剩余空间 */
+    line-height: 1.5 !important;
+}
+
+/* 5. 针对手机端的内边距微调 */
+@media (max-width: 640px) {
+    #globalResults .glass {
+        padding: 1.25rem !important;
+        margin-bottom: 1rem !important;
+    }
+}
+
+#speedModeToggle:checked + .slider {
+    background: var(--primary-gradient) !important;
+}
+#speedModeToggle:checked + .slider:before {
+    transform: translateX(20px);
+}
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <!-- 隐私锁全屏遮罩 -->
+<div id="privacyLock" class="fixed inset-0 z-[9999] glass-strong flex items-center justify-center hidden">
+    <div class="w-full max-w-xs px-8 py-10 rounded-[2.5rem] glass shadow-2xl text-center border border-white/50">
+        <div class="w-16 h-16 bg-gradient-to-br from-pink-400 to-purple-500 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
+            <i data-lucide="shield-check" class="text-white w-8 h-8"></i>
+        </div>
+        <h2 id="lockTitle" class="text-xl font-black text-gray-800 mb-1">隐私验证</h2>
+        <p id="lockDesc" class="text-[10px] text-gray-400 mb-8 uppercase tracking-widest">请输入您的 4 位隐私码</p>
+        
+        <!-- 密码圆点 -->
+        <div class="flex justify-center space-x-4 mb-10">
+            <div id="dot-0" class="w-3 h-3 rounded-full border-2 border-pink-200 transition-all"></div>
+            <div id="dot-1" class="w-3 h-3 rounded-full border-2 border-pink-200 transition-all"></div>
+            <div id="dot-2" class="w-3 h-3 rounded-full border-2 border-pink-200 transition-all"></div>
+            <div id="dot-3" class="w-3 h-3 rounded-full border-2 border-pink-200 transition-all"></div>
+        </div>
+
+        <!-- 数字键盘 -->
+        <div class="grid grid-cols-3 gap-4">
+            <button onclick="pressPin(1)" class="h-14 rounded-2xl glass font-bold text-gray-700 active:bg-pink-100">1</button>
+            <button onclick="pressPin(2)" class="h-14 rounded-2xl glass font-bold text-gray-700 active:bg-pink-100">2</button>
+            <button onclick="pressPin(3)" class="h-14 rounded-2xl glass font-bold text-gray-700 active:bg-pink-100">3</button>
+            <button onclick="pressPin(4)" class="h-14 rounded-2xl glass font-bold text-gray-700 active:bg-pink-100">4</button>
+            <button onclick="pressPin(5)" class="h-14 rounded-2xl glass font-bold text-gray-700 active:bg-pink-100">5</button>
+            <button onclick="pressPin(6)" class="h-14 rounded-2xl glass font-bold text-gray-700 active:bg-pink-100">6</button>
+            <button onclick="pressPin(7)" class="h-14 rounded-2xl glass font-bold text-gray-700 active:bg-pink-100">7</button>
+            <button onclick="pressPin(8)" class="h-14 rounded-2xl glass font-bold text-gray-700 active:bg-pink-100">8</button>
+            <button onclick="pressPin(9)" class="h-14 rounded-2xl glass font-bold text-gray-700 active:bg-pink-100">9</button>
+            <button onclick="clearPin()" class="h-14 rounded-2xl text-[10px] font-bold text-gray-400">清空</button>
+            <button onclick="pressPin(0)" class="h-14 rounded-2xl glass font-bold text-gray-700 active:bg-pink-100">0</button>
+            <button onclick="pressPin('del')" class="h-14 rounded-2xl flex items-center justify-center text-pink-400">
+                <i data-lucide="delete" class="w-5 h-5"></i>
+            </button>
+        </div>
+    </div>
+</div>
+    
+    <!-- 远程更新弹窗 -->
+<div id="updateModal" class="fixed inset-0 z-[9998] glass-strong flex items-center justify-center hidden">
+    <div class="w-full max-w-xs p-6 rounded-[2rem] glass shadow-2xl border border-white/50 text-center">
+        <div class="w-12 h-12 bg-pink-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <i data-lucide="arrow-up-circle" class="text-pink-500 w-6 h-6"></i>
+        </div>
+        <h3 id="updateTitle" class="font-bold text-gray-800 text-base mb-1">发现新版本</h3>
+        <p class="text-[9px] text-gray-400 uppercase tracking-wider mb-4">Update Available</p>
+        
+        <!-- 更新日志区域 -->
+        <div id="updateChangelog" class="text-left text-xs text-gray-500 space-y-1 mb-6 bg-white/30 p-3 rounded-xl max-h-32 overflow-y-auto">
+            <!-- 动态写入日志 -->
+        </div>
+
+        <div class="flex flex-col space-y-2">
+            <a id="updateLink" href="#" target="_blank" class="w-full btn-primary text-white py-2.5 rounded-xl text-xs font-bold text-center block">
+                立即升级
+            </a>
+            <button onclick="closeUpdateModal()" class="w-full py-2.5 rounded-xl text-xs font-bold text-gray-400 hover:bg-gray-50/10">
+                暂不升级
+            </button>
+        </div>
+    </div>
+</div>
+
+    <!-- Header -->
+    <header class="max-w-6xl mx-auto mb-8 flex justify-between items-center flex-wrap gap-3">
+        <div class="glass px-6 py-3 flex items-center space-x-3 shadow-sm">
+            <div class="bg-gradient-to-br from-pink-400 to-purple-500 p-2 rounded-xl">
+                <i data-lucide="sparkles" class="text-white w-5 h-5"></i>
+            </div>
+            <div>
+                <span class="text-xl font-black bg-clip-text text-transparent bg-gradient-to-r from-pink-500 to-purple-600">MTF WORLD</span>
+                <span class="text-[10px] block text-gray-400 font-medium tracking-wider">HRT COMPANION</span>
+            </div>
+        </div>
+        <div class="flex items-center space-x-3 glass px-4 py-2 rounded-full shadow-sm">
+            <i data-lucide="volume-2" class="w-4 h-4 text-gray-500"></i>
+            <span class="text-xs font-medium text-gray-500">音效</span>
+            <label class="relative inline-block w-11 h-6">
+                <input type="checkbox" id="soundToggle" class="opacity-0 w-0 h-0" checked>
+                <span class="slider absolute cursor-pointer inset-0 bg-gray-300 rounded-full transition-all duration-300 before:content-[''] before:absolute before:h-4 before:w-4 before:left-1 before:bottom-1 before:bg-white before:rounded-full before:transition-all before:duration-300 before:shadow-md"></span>
+            </label>
+            <style>
+                input:checked + .slider { background: linear-gradient(135deg, #ec4899, #db2777); }
+                input:checked + .slider:before { transform: translateX(20px); }
+            </style>
+        </div>
+    </header>
+
+    <main class="max-w-5xl mx-auto">
+
+        <!-- 1. 首页 -->
+        <!-- 建议与反馈箱 (主页顶部置顶版) -->
+<div class="glass p-5 rounded-2xl border-l-4 border-purple-500 flex justify-between items-center card-hover animate-in fade-in duration-300">
+    <div class="flex items-center space-x-3">
+        <div class="bg-purple-100 dark:bg-purple-900/30 p-2.5 rounded-xl shrink-0 animate-pulse-soft">
+            <i data-lucide="message-square-plus" class="text-purple-500 w-5 h-5"></i>
+        </div>
+        <div>
+            <h4 class="font-bold text-gray-800 text-sm">反馈与建议通道</h4>
+            <p class="text-[10px] text-gray-400 mt-0.5">发现 Bug 或有新点子？随时加群反馈！</p>
+        </div>
+    </div>
+    <!-- 链接直达你 GitHub 的 Issues 页面 -->
+    <a href="https://qun.qq.com/universal-share/share?ac=1&authKey=9swzn0POICbpnSQ5RD0pazN5pw0DmHtIBr0JadrZR8ZkLBKE3wfMh0Jy3K1%2FL4zS&busi_data=eyJncm91cENvZGUiOiIxMDk3MzQzODg2IiwidG9rZW4iOiIwa3cwbXFwQ1Z5dUpiL0phS0MxR1I0MTBhV2NaOVVFZkNHOVN3NW5HeGlYbzNOSG1ONmVlRjVkajRJR0xLWWRVIiwidWluIjoiMzc4Mjg3NDUxNiJ9&data=vlnwM2kyHnZlZqP-8qD-d5UtMHURijE18iiDmHV8gFWGXkADuKEMkIko_QNN5YgV0WFO3gkZOA9btV3oaMwGIg&svctype=4&tempid=h5_group_info" target="_blank" 
+       class="btn-primary text-white px-5 py-2.5 rounded-xl text-xs font-bold transition-all shrink-0">
+        去提建议
+    </a>
+</div>
+        <div id="tab-home" class="tab-content active space-y-6">
+            <div class="text-center py-10 animate-float">
+                <div class="inline-block mb-4 p-4 rounded-full bg-gradient-to-br from-pink-100 to-purple-100">
+                    <i data-lucide="heart" class="w-8 h-8 text-pink-500 fill-pink-500"></i>
+                </div>
+                
+                <h1 class="text-4xl font-black text-gray-800 tracking-tight">你好，姐妹</h1>
+                
+                <p class="text-gray-400 mt-3 text-lg">温柔地记录每一步蜕变</p>
+                <div class="text-center px-4">
+    <p id="dailyQuote" class="text-[11px] text-pink-400 font-medium italic opacity-0 transition-opacity duration-1000">加载中...</p>
+</div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <a href="https://akimideshop.com/" target="_blank" rel="noopener" class="glass p-5 flex items-center space-x-4 card-hover border-l-4 border-pink-400 rounded-2xl">
+                    <div class="bg-gradient-to-br from-pink-100 to-pink-50 p-3 rounded-xl"><i data-lucide="shopping-bag" class="text-pink-500 w-6 h-6"></i></div>
+                    <div><h3 class="font-bold text-gray-800 text-lg">秋实小铺</h3><p class="text-xs text-gray-400 mt-0.5">周边与生活用品商店</p></div>
+                </a>
+                <a href="https://bbs.viva-la-vita.org/" target="_blank" rel="noopener" class="glass p-5 flex items-center space-x-4 card-hover border-l-4 border-purple-400 rounded-2xl">
+                    <div class="bg-gradient-to-br from-purple-100 to-purple-50 p-3 rounded-xl"><i data-lucide="flower-2" class="text-purple-500 w-6 h-6"></i></div>
+                    <div><h3 class="font-bold text-gray-800 text-lg">生如夏花</h3><p class="text-xs text-gray-400 mt-0.5">中国最大的MTF社区论坛</p></div>
+                </a>
+                <a href="https://hrt.transmtf.com/" target="_blank" rel="noopener" class="glass p-5 flex items-center space-x-4 card-hover border-l-4 border-blue-400 rounded-2xl">
+                    <div class="bg-gradient-to-br from-blue-100 to-blue-50 p-3 rounded-xl"><i data-lucide="beaker" class="text-blue-500 w-6 h-6"></i></div>
+                    <div><h3 class="font-bold text-gray-800 text-lg">HRT 用药</h3><p class="text-xs text-gray-400 mt-0.5">剂量参考与用药知识</p></div>
+                </a>
+                <a href="https://nomtf.com" target="_blank" rel="noopener" class="glass p-5 flex items-center space-x-4 card-hover border-l-4 border-red-400 rounded-2xl">
+                    <div class="bg-gradient-to-br from-red-100 to-red-50 p-3 rounded-xl"><i data-lucide="globe" class="text-red-500 w-6 h-6"></i></div>
+                    <div><h3 class="font-bold text-gray-800 text-lg">反跨网</h3><p class="text-xs text-gray-400 mt-0.5">了解部分MTF成员的种种事迹</p></div>
+                    </a>
+                    <!-- 新增卡片 1：HRT 药理 -->
+<a href="https://hrtyaku.com/zh" target="_blank" rel="noopener" class="glass p-5 flex items-center space-x-4 card-hover border-l-4 border-green-400 rounded-2xl">
+    <div class="bg-gradient-to-br from-green-100 to-green-50 p-3 rounded-xl">
+        <i data-lucide="pill" class="text-green-500 w-6 h-6"></i>
+    </div>
+    <div>
+        <h3 class="font-bold text-gray-800 text-lg">HRT 药理</h3>
+        <p class="text-xs text-gray-400 mt-0.5">专业跨性别药理学与剂量指南</p>
+    </div>
+</a>
+
+<!-- 新增卡片 2：我们中的一员 -->
+<a href="https://www.one-among.us" target="_blank" rel="noopener" class="glass p-5 flex items-center space-x-4 card-hover border-l-4 border-indigo-400 rounded-2xl">
+    <div class="bg-gradient-to-br from-indigo-100 to-indigo-50 p-3 rounded-xl">
+        <i data-lucide="sparkles" class="text-indigo-500 w-6 h-6"></i>
+    </div>
+    <div>
+        <h3 class="font-bold text-gray-800 text-lg">那些秋叶</h3>
+        <p class="text-xs text-gray-400 mt-0.5">纪念跨儿因生活而消逝的人们</p>
+    </div>
+    <!-- 新增卡片 7：FreeOD 减害百科 (电脑端横跨两列的大横幅) -->
+<a href="https://freeodwiki.org/" target="_blank" rel="noopener" class="col-span-1 md:col-span-2 glass p-5 flex items-center space-x-4 card-hover border-l-4 border-red-500 rounded-2xl">
+    <div class="bg-gradient-to-br from-red-100 to-red-50 p-3 rounded-xl">
+        <i data-lucide="shield-alert" class="text-red-500 w-6 h-6 animate-pulse-soft"></i>
+    </div>
+    <div>
+        <h3 class="font-bold text-gray-800 text-lg">FreeOD 减害百科</h3>
+        <p class="text-xs text-gray-400 mt-0.5">药物滥用预防、安全常识与科学减害指南</p>
+    </div>
+</a>
+                </a>
+            </div>
+
+            <div class="glass p-6 rounded-2xl">
+                <h3 class="font-bold text-gray-700 mb-4 flex items-center"><i data-lucide="link" class="w-4 h-4 mr-2 text-pink-500"></i>更多资源</h3>
+                <!-- 6. 我的收藏区域 -->
+            <div class="glass p-6 rounded-3xl mt-6 border-t-4 border-yellow-400">
+    <div class="flex justify-between items-center mb-4">
+        <h3 class="font-bold text-gray-700 flex items-center">
+            <i data-lucide="star" class="w-5 h-5 mr-2 text-yellow-500 fill-yellow-500"></i>我的收藏
+        </h3>
+        <span id="bookmarkCount" class="text-[10px] font-black bg-yellow-100 text-yellow-600 px-2 py-0.5 rounded-full">0</span>
+    </div>
+    <div id="bookmarkList" class="space-y-3">
+        <!-- 动态生成收藏列表 -->
+        <p class="text-xs text-gray-400 text-center py-6">暂无收藏，快去“探索”发现宝藏吧</p>
+    </div>
+</div>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <a href="https://mtf.wiki/zh-cn/docs" target="_blank" class="p-3 rounded-xl bg-white/50 text-center text-sm font-medium hover:bg-pink-50 hover:text-pink-600 transition border border-transparent hover:border-pink-100">MTF Wiki</a>
+                    <a href="https://knowsex.net" target="_blank" class="p-3 rounded-xl bg-white/50 text-center text-sm font-medium hover:bg-pink-50 hover:text-pink-600 transition border border-transparent hover:border-pink-100">KnowSex</a>
+                    <a href="https://ftm.wiki/zh-cn/" target="_blank" class="p-3 rounded-xl bg-white/50 text-center text-sm font-medium hover:bg-pink-50 hover:text-pink-600 transition border border-transparent hover:border-pink-100">FTM Wiki</a>
+                    <a href="https://shef.cc/2024/03/01/how_to_pretend_to_be_a_mtf/" target="_blank" class="p-3 rounded-xl bg-white/50 text-center text-sm font-medium hover:bg-pink-50 hover:text-pink-600 transition border border-transparent hover:border-pink-100">伪装指南</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. 知识库 -->
+        <div id="tab-knowledge" class="tab-content space-y-6">
+            <div class="flex overflow-x-auto space-x-2 pb-2 no-scrollbar sticky top-0 z-10 py-2">
+                <button onclick="scrollToSection('sec-terms')" class="flex-shrink-0 glass px-5 py-2.5 rounded-full shadow-sm text-sm font-bold text-pink-600 hover:bg-pink-50 transition">核心术语</button>
+               
+                <button onclick="scrollToSection('sec-meds')" class="flex-shrink-0 glass px-5 py-2.5 rounded-full shadow-sm text-sm font-bold text-blue-600 hover:bg-blue-50 transition">药物介绍</button>
+                <button onclick="scrollToSection('sec-history')" class="flex-shrink-0 glass px-5 py-2.5 rounded-full shadow-sm text-sm font-bold text-green-600 hover:bg-green-50 transition">社区历史</button>
+            </div>
+
+            <section id="sec-terms" class="glass p-5 md:p-8 rounded-2xl shadow-sm">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+                    <div>
+                        <h2 class="text-2xl font-black flex items-center text-pink-600">
+                            <i data-lucide="book-open-check" class="mr-2 w-6 h-6"></i>MTF 百科术语库
+                        </h2>
+                        <p class="text-xs text-gray-400 mt-1">涵盖身份、医学、社会与心理核心概念</p>
+                    </div>
+                    <div class="relative w-full md:w-72">
+                        <input type="text" id="termSearch" placeholder="搜索术语..." class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-pink-100 focus:ring-2 focus:ring-pink-300 outline-none text-sm bg-white/70">
+                        <i data-lucide="search" class="absolute left-3 top-2.5 w-4 h-4 text-gray-400"></i>
+                    </div>
+                </div>
+
+                <div class="flex flex-wrap gap-2 mb-6" id="catButtons">
+                    <button data-cat="all" class="pill active px-4 py-1.5 rounded-full text-xs font-bold bg-gray-100 text-gray-600">全部</button>
+                    <button data-cat="identity" class="pill px-4 py-1.5 rounded-full bg-gray-100 text-gray-600 text-xs font-bold hover:bg-pink-50">身份认同</button>
+                    <button data-cat="medical" class="pill px-4 py-1.5 rounded-full bg-gray-100 text-gray-600 text-xs font-bold hover:bg-blue-50">医学相关</button>
+                    <button data-cat="social" class="pill px-4 py-1.5 rounded-full bg-gray-100 text-gray-600 text-xs font-bold hover:bg-purple-50">社会生活</button>
+                    <button data-cat="psychology" class="pill px-4 py-1.5 rounded-full bg-gray-100 text-gray-600 text-xs font-bold hover:bg-orange-50">心理探索</button>
+                </div>
+
+                <div id="termsGrid" class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <!-- 身份类 -->
+                    <div class="term-card bg-white/60 p-5 rounded-2xl" data-cat="identity">
+                        <div class="flex justify-between items-start mb-2">
+                            <h4 class="font-bold text-pink-700">MTF / Trans Woman</h4>
+                            <span class="text-[10px] px-2.5 py-1 rounded-full bg-pink-100 text-pink-600 font-bold">身份</span>
+                        </div>
+                        <p class="text-sm text-gray-600 leading-relaxed">Male-to-Female，出生指派性别为男，但性别认同为女性的跨性别者。现多用 Trans Woman（跨性别女性）表达。</p>
+                    </div>
+                    <div class="term-card bg-white/60 p-5 rounded-2xl" data-cat="identity">
+                        <div class="flex justify-between items-start mb-2">
+                            <h4 class="font-bold text-pink-700">AMAB</h4>
+                            <span class="text-[10px] px-2.5 py-1 rounded-full bg-pink-100 text-pink-600 font-bold">身份</span>
+                        </div>
+                        <p class="text-sm text-gray-600 leading-relaxed">Assigned Male at Birth，出生指派男性。用于客观描述生物学起点而不定义现在的性别。</p>
+                    </div>
+                    <div class="term-card bg-white/60 p-5 rounded-2xl" data-cat="identity">
+                        <div class="flex justify-between items-start mb-2">
+                            <h4 class="font-bold text-pink-700">Enby (Non-binary)</h4>
+                            <span class="text-[10px] px-2.5 py-1 rounded-full bg-pink-100 text-pink-600 font-bold">身份</span>
+                        </div>
+                        <p class="text-sm text-gray-600 leading-relaxed">非二元性别。认同既不是完全的男性，也不是完全的女性，可能处于两者之间或之外。</p>
+                    </div>
+                    <!-- 医学类 -->
+                    <div class="term-card bg-white/60 p-5 rounded-2xl" data-cat="medical">
+                        <div class="flex justify-between items-start mb-2">
+                            <h4 class="font-bold text-blue-700">HRT</h4>
+                            <span class="text-[10px] px-2.5 py-1 rounded-full bg-blue-100 text-blue-600 font-bold">医学</span>
+                        </div>
+                        <p class="text-sm text-gray-600 leading-relaxed">激素替代疗法。通过补充雌激素并抑制睾酮，引导身体产生第二性征发育（如乳腺发育、皮肤细腻等）。</p>
+                    </div>
+                    <div class="term-card bg-white/60 p-5 rounded-2xl" data-cat="medical">
+                        <div class="flex justify-between items-start mb-2">
+                            <h4 class="font-bold text-blue-700">SRS / GCS</h4>
+                            <span class="text-[10px] px-2.5 py-1 rounded-full bg-blue-100 text-blue-600 font-bold">医学</span>
+                        </div>
+                        <p class="text-sm text-gray-600 leading-relaxed">性别重置手术（Sex Reassignment Surgery），现多称为性别肯定手术或变性手术。旨在重塑符合性别认同的生理器官。</p>
+                    </div>
+                    <div class="term-card bg-white/60 p-5 rounded-2xl" data-cat="medical">
+                        <div class="flex justify-between items-start mb-2">
+                            <h4 class="font-bold text-blue-700">FFS</h4>
+                            <span class="text-[10px] px-2.5 py-1 rounded-full bg-blue-100 text-blue-600 font-bold">医学</span>
+                        </div>
+                        <p class="text-sm text-gray-600 leading-relaxed">面部女性化手术。包括磨眉弓、改下颚线、缩人中等，使面部轮廓更接近女性特征。</p>
+                    </div>
+                    <div class="term-card bg-white/60 p-5 rounded-2xl" data-cat="medical">
+                        <div class="flex justify-between items-start mb-2">
+                            <h4 class="font-bold text-blue-700">E2 / T</h4>
+                            <span class="text-[10px] px-2.5 py-1 rounded-full bg-blue-100 text-blue-600 font-bold">医学</span>
+                        </div>
+                        <p class="text-sm text-gray-600 leading-relaxed">E2指雌二醇，是MTF主要的激素指标；T指睾酮，通常需要控制在极低水平以消除男性特征。</p>
+                    </div>
+                    <div class="term-card bg-white/60 p-5 rounded-2xl" data-cat="medical">
+                        <div class="flex justify-between items-start mb-2">
+                            <h4 class="font-bold text-blue-700">糖</h4>
+                            <span class="text-[10px] px-2.5 py-1 rounded-full bg-blue-100 text-blue-600 font-bold">医学</span>
+                        </div>
+                        <p class="text-sm text-gray-600 leading-relaxed">一般指代雌性和抗雄性药物，MTF圈子常见此词。</p>
+                    </div>
+                    <div class="term-card bg-white/60 p-5 rounded-2xl" data-cat="medical">
+                        <div class="flex justify-between items-start mb-2">
+                            <h4 class="font-bold text-blue-700">od</h4>
+                            <span class="text-[10px] px-2.5 py-1 rounded-full bg-blue-100 text-blue-600 font-bold">医学</span>
+                        </div>
+                        <p class="text-sm text-gray-600 leading-relaxed">一般指过度滥用相关药物，MTF圈子常见此词。通常非常不建议这样做。</p>
+                    </div>
+                    <div class="term-card bg-white/60 p-5 rounded-2xl" data-cat="medical">
+                        <div class="flex justify-between items-start mb-2">
+                            <h4 class="font-bold text-blue-700">雌爆</h4>
+                            <span class="text-[10px] px-2.5 py-1 rounded-full bg-blue-100 text-blue-600 font-bold">医学</span>
+                        </div>
+                        <p class="text-sm text-gray-600 leading-relaxed">过度滥用药物的症状之一，体内雌激素疯狂上升，并彻底压制雄激素。</p>
+                    </div>
+                    <!-- 社会类 -->
+                    <div class="term-card bg-white/60 p-5 rounded-2xl" data-cat="social">
+                        <div class="flex justify-between items-start mb-2">
+                            <h4 class="font-bold text-purple-700">家长党</h4>
+                            <span class="text-[10px] px-2.5 py-1 rounded-full bg-purple-100 text-purple-600 font-bold">社会</span>
+                        </div>
+                        <p class="text-sm text-gray-600 leading-relaxed">指在家庭中，父母或亲戚支持男变女的行为，并提供经济和药物。或父母或亲戚不管男变女的行为(家长不管党，一个分支)。</p>
+                    </div>
+                    <div class="term-card bg-white/60 p-5 rounded-2xl" data-cat="social">
+                        <div class="flex justify-between items-start mb-2">
+                            <h4 class="font-bold text-purple-700">家暴党</h4>
+                            <span class="text-[10px] px-2.5 py-1 rounded-full bg-purple-100 text-purple-600 font-bold">社会</span>
+                        </div>
+                        <p class="text-sm text-gray-600 leading-relaxed">指在家庭中，父母或亲戚不支持此行为，并对MTF的人大打出手，通常是炸柜的极端变种。</p>
+                        </div>
+                    <div class="term-card bg-white/60 p-5 rounded-2xl" data-cat="social">
+                        <div class="flex justify-between items-start mb-2">
+                            <h4 class="font-bold text-purple-700">天残党</h4>
+                            <span class="text-[10px] px-2.5 py-1 rounded-full bg-purple-100 text-purple-600 font-bold">社会</span>
+                        </div>
+                        <p class="text-sm text-gray-600 leading-relaxed">指超过18岁之后才进行HRT的人。</p>
+                        </div>
+                    <div class="term-card bg-white/60 p-5 rounded-2xl" data-cat="social">
+                        <div class="flex justify-between items-start mb-2">
+                            <h4 class="font-bold text-purple-700">年龄党</h4>
+                            <span class="text-[10px] px-2.5 py-1 rounded-full bg-purple-100 text-purple-600 font-bold">社会</span>
+                        </div>
+                        <p class="text-sm text-gray-600 leading-relaxed">指在青少年时期进行HRT的人。</p>
+                        
+                    </div>
+                    <div class="term-card bg-white/60 p-5 rounded-2xl" data-cat="social">
+                        <div class="flex justify-between items-start mb-2">
+                            <h4 class="font-bold text-purple-700">深柜</h4>
+                            <span class="text-[10px] px-2.5 py-1 rounded-full bg-purple-100 text-purple-600 font-bold">社会</span>
+                        </div>
+                        <p class="text-sm text-gray-600 leading-relaxed">以女性身份生活，且完全不向新环境中的人透露自己的跨性别背景。</p>
+                    </div>
+                    <div class="term-card bg-white/60 p-5 rounded-2xl" data-cat="social">
+                        <div class="flex justify-between items-start mb-2">
+                            <h4 class="font-bold text-purple-700">炸柜</h4>
+                            <span class="text-[10px] px-2.5 py-1 rounded-full bg-purple-100 text-purple-600 font-bold">社会</span>
+                        </div>
+                        <p class="text-sm text-gray-600 leading-relaxed">以女性身份生活，但被迫向新环境中的人透露自己的跨性别背景。通常为家长的不信任或怀疑。</p>
+                    </div>
+                    <div class="term-card bg-white/60 p-5 rounded-2xl" data-cat="social">
+                        <div class="flex justify-between items-start mb-2">
+                            <h4 class="font-bold text-purple-700">性别误认</h4>
+                            <span class="text-[10px] px-2.5 py-1 rounded-full bg-purple-100 text-purple-600 font-bold">社会</span>
+                        </div>
+                        <p class="text-sm text-gray-600 leading-relaxed">性别错称。即使用了不符合当事人性别认同的人称代词（如对跨性别女性称呼"他"）。</p>
+                    </div>
+                    <div class="term-card bg-white/60 p-5 rounded-2xl" data-cat="social">
+                        <div class="flex justify-between items-start mb-2">
+                            <h4 class="font-bold text-purple-700">出柜</h4>
+                            <span class="text-[10px] px-2.5 py-1 rounded-full bg-purple-100 text-purple-600 font-bold">社会</span>
+                        </div>
+                        <p class="text-sm text-gray-600 leading-relaxed">向家人、朋友或公众坦露自己的跨性别身份的过程。</p>
+                    </div>
+                    <div class="term-card bg-white/60 p-5 rounded-2xl" data-cat="social">
+                        <div class="flex justify-between items-start mb-2">
+                            <h4 class="font-bold text-purple-700">互fo</h4>
+                            <span class="text-[10px] px-2.5 py-1 rounded-full bg-purple-100 text-purple-600 font-bold">社会</span>
+                        </div>
+                        <p class="text-sm text-gray-600 leading-relaxed">向其他姐妹们(通常是在推特)互相关注的行为。</p>
+                    </div>
+                    <div class="term-card bg-white/60 p-5 rounded-2xl" data-cat="social">
+                        <div class="flex justify-between items-start mb-2">
+                            <h4 class="font-bold text-purple-700">无证含糖</h4>
+                            <span class="text-[10px] px-2.5 py-1 rounded-full bg-purple-100 text-purple-600 font-bold">社会</span>
+                        </div>
+                        <p class="text-sm text-gray-600 leading-relaxed">指不从正规药店购买，与第三方渠道购买。</p>
+                    </div>
+                    <div class="term-card bg-white/60 p-5 rounded-2xl" data-cat="social">
+                        <div class="flex justify-between items-start mb-2">
+                            <h4 class="font-bold text-purple-700">有证含糖</h4>
+                            <span class="text-[10px] px-2.5 py-1 rounded-full bg-purple-100 text-purple-600 font-bold">社会</span>
+                        </div>
+                        <p class="text-sm text-gray-600 leading-relaxed">指拥有大证，可进行SRS手术的证明。</p>
+                        </div>
+                    <div class="term-card bg-white/60 p-5 rounded-2xl" data-cat="social">
+                        <div class="flex justify-between items-start mb-2">
+                            <h4 class="font-bold text-purple-700">小证含糖</h4>
+                            <span class="text-[10px] px-2.5 py-1 rounded-full bg-purple-100 text-purple-600 font-bold">社会</span>
+                        </div>
+                        <p class="text-sm text-gray-600 leading-relaxed">指拥有小证，可从正规药店或跨性别友好医院购买。</p>
+                    </div>
+                    <!-- 心理类 -->
+                    <div class="term-card bg-white/60 p-5 rounded-2xl" data-cat="psychology">
+                        <div class="flex justify-between items-start mb-2">
+                            <h4 class="font-bold text-orange-700">性别焦虑</h4>
+                            <span class="text-[10px] px-2.5 py-1 rounded-full bg-orange-100 text-orange-600 font-bold">心理</span>
+                        </div>
+                        <p class="text-sm text-gray-600 leading-relaxed">因生理性别与认同性别不一致导致的痛苦、抑郁或不安感。</p>
+                    </div>
+                    <div class="term-card bg-white/60 p-5 rounded-2xl" data-cat="psychology">
+                        <div class="flex justify-between items-start mb-2">
+                            <h4 class="font-bold text-orange-700">探索中</h4>
+                            <span class="text-[10px] px-2.5 py-1 rounded-full bg-orange-100 text-orange-600 font-bold">心理</span>
+                        </div>
+                        <p class="text-sm text-gray-600 leading-relaxed">心理和行为还在摸索中。通常不敢确定自己的身份。</p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="sec-meds" class="glass p-5 md:p-8 rounded-2xl shadow-sm mt-6">
+                <div class="mb-6">
+                    <h2 class="text-2xl font-black flex items-center text-blue-600">
+                        <i data-lucide="pill" class="mr-2 w-6 h-6"></i>MTF 药物科学百科
+                    </h2>
+                    <p class="text-xs text-gray-400 mt-1">了解激素替代疗法 (HRT) 的常见方案与原理</p>
+                </div>
+                <div class="bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-blue-400 p-4 mb-6 rounded-r-xl">
+                    <div class="flex items-center">
+                        <i data-lucide="alert-circle" class="text-blue-600 mr-2 w-5 h-5"></i>
+                        <p class="text-sm font-bold text-blue-800">医疗免责声明</p>
+                    </div>
+                    <p class="text-xs text-blue-600 mt-1 leading-relaxed">
+                        以下内容仅供学术交流与参考，不构成医疗建议。HRT 涉及复杂的内分泌调节，强力建议在专业医师指导下进行，并定期监测肝功能、血栓风险及激素水平。
+                    </p>
+                </div>
+                <div class="grid grid-cols-1 gap-5">
+                    <div class="bg-white/50 p-5 rounded-2xl border border-blue-100">
+                        <h3 class="font-bold text-blue-700 mb-4 flex items-center text-lg"><i data-lucide="droplets" class="mr-2 w-5 h-5"></i>雌激素 (Estrogens)</h3>
+                        <div class="grid md:grid-cols-3 gap-4">
+                            <div class="bg-white/70 p-4 rounded-xl border border-blue-50">
+                                <p class="text-xs font-bold text-blue-500 uppercase tracking-wider">口服类 (Oral)</p>
+                                <p class="text-sm mt-2 font-medium text-gray-700">戊酸雌二醇 (补佳乐)、17β-雌二醇</p>
+                                <p class="text-[11px] text-gray-400 mt-2 italic">肝脏首过效应，肝压相对较大。</p>
+                            </div>
+                            <div class="bg-white/70 p-4 rounded-xl border border-blue-50">
+                                <p class="text-xs font-bold text-blue-500 uppercase tracking-wider">透皮类 (Transdermal)</p>
+                                <p class="text-sm mt-2 font-medium text-gray-700">雌二醇凝胶 (爱斯妥)、贴片</p>
+                                <p class="text-[11px] text-gray-400 mt-2 italic">不经过肝脏，血药浓度平稳，安全性高。</p>
+                            </div>
+                            <div class="bg-white/70 p-4 rounded-xl border border-blue-50">
+                                <p class="text-xs font-bold text-blue-500 uppercase tracking-wider">注射类 (Injections)</p>
+                                <p class="text-sm mt-2 font-medium text-gray-700">环戊丙酸雌二醇、庚酸雌二醇</p>
+                                <p class="text-[11px] text-gray-400 mt-2 italic">国内药准字匮乏，需注意海外来源。</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white/50 p-5 rounded-2xl border border-indigo-100">
+                        <h3 class="font-bold text-indigo-700 mb-4 flex items-center text-lg"><i data-lucide="shield-off" class="mr-2 w-5 h-5"></i>抗雄激素 (Anti-Androgens)</h3>
+                        <div class="grid md:grid-cols-2 gap-4">
+                            <div class="flex gap-3 items-start p-4 bg-white/70 rounded-xl border border-indigo-50">
+                                <span class="px-3 py-1 bg-indigo-100 text-indigo-600 text-[11px] font-bold rounded-lg shrink-0">色普龙</span>
+                                <p class="text-xs text-gray-600 leading-relaxed">强效孕激素活性，抑制促性腺激素。关注情绪及催乳素风险。</p>
+                            </div>
+                            <div class="flex gap-3 items-start p-4 bg-white/70 rounded-xl border border-indigo-50">
+                                <span class="px-3 py-1 bg-indigo-100 text-indigo-600 text-[11px] font-bold rounded-lg shrink-0">螺内酯</span>
+                                <p class="text-xs text-gray-600 leading-relaxed">保钾利尿剂，抗雄效果较弱，需较大剂量，注意电解质。</p>
+                            </div>
+                            <div class="flex gap-3 items-start p-4 bg-white/70 rounded-xl border border-indigo-50">
+                                <span class="px-3 py-1 bg-indigo-100 text-indigo-600 text-[11px] font-bold rounded-lg shrink-0">比卡鲁胺</span>
+                                <p class="text-xs text-gray-600 leading-relaxed">受体阻断剂，不降低睾酮数值但阻止作用，对肝功能有要求。</p>
+                            </div>
+                            <div class="flex gap-3 items-start p-4 bg-white/70 rounded-xl border border-indigo-50">
+                                <span class="px-3 py-1 bg-indigo-100 text-indigo-600 text-[11px] font-bold rounded-lg shrink-0">GnRH 类似物</span>
+                                <p class="text-xs text-gray-600 leading-relaxed">如亮丙瑞林，昂贵但几乎无副作用，从源头切断雄激素。</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="sec-history" class="glass p-5 md:p-8 rounded-2xl shadow-sm mt-6 mb-20">
+                <div class="mb-6">
+                    <h2 class="text-2xl font-black flex items-center text-green-600"><i data-lucide="landmark" class="mr-2 w-6 h-6"></i>跨性别历史足迹</h2>
+                    <p class="text-xs text-gray-400 mt-1">从边缘走向可见，一段关于勇气与自我的长征</p>
+                </div>
+                <div class="relative border-l-2 border-green-200 ml-3 space-y-8">
+                    <div class="relative pl-8">
+                        <div class="absolute -left-[11px] top-1 bg-white border-4 border-green-400 w-5 h-5 rounded-full timeline-dot"></div>
+                        <div class="bg-white/60 p-5 rounded-2xl border border-green-100 shadow-sm">
+                            <span class="text-xs font-black text-green-500">1930 - 1931</span>
+                            <h4 class="font-bold text-gray-800 mt-1 text-lg">莉莉·艾尔伯 (Lili Elbe)</h4>
+                            <p class="text-sm text-gray-600 mt-2 leading-relaxed">丹麦画家，世界上最早接受性别重置手术的记录者之一。《丹麦女孩》原型，象征现代跨性别认知的萌芽。</p>
+                        </div>
+                    </div>
+                    <div class="relative pl-8">
+                        <div class="absolute -left-[11px] top-1 bg-white border-4 border-green-400 w-5 h-5 rounded-full timeline-dot"></div>
+                        <div class="bg-white/60 p-5 rounded-2xl border border-green-100 shadow-sm">
+                            <span class="text-xs font-black text-green-500">1969.06</span>
+                            <h4 class="font-bold text-gray-800 mt-1 text-lg">石墙暴动 (Stonewall)</h4>
+                            <p class="text-sm text-gray-600 mt-2 leading-relaxed">纽约石墙酒吧冲突开启现代LGBTQ+权利运动。跨性别女性 Marsha P. Johnson 成为先锋象征。</p>
+                        </div>
+                    </div>
+                    <div class="relative pl-8">
+                        <div class="absolute -left-[11px] top-1 bg-white border-4 border-green-400 w-5 h-5 rounded-full timeline-dot"></div>
+                        <div class="bg-white/60 p-5 rounded-2xl border border-green-100 shadow-sm">
+                            <span class="text-xs font-black text-green-500">2000s - 2010s</span>
+                            <h4 class="font-bold text-gray-800 mt-1 text-lg">互联网社区的崛起</h4>
+                            <p class="text-sm text-gray-600 mt-2 leading-relaxed">夏安、贴吧、MTF Wiki 等平台出现。知识不再被垄断，跨儿群体通过网络互助、药理研究和心理支持。</p>
+                        </div>
+                    </div>
+                    <div class="relative pl-8">
+                        <div class="absolute -left-[11px] top-1 bg-white border-4 border-green-400 w-5 h-5 rounded-full timeline-dot"></div>
+                        <div class="bg-white/60 p-5 rounded-2xl border border-green-100 shadow-sm">
+                            <span class="text-xs font-black text-green-500">NOW</span>
+                            <h4 class="font-bold text-gray-800 mt-1 text-lg">从"病理化"到"去病化"</h4>
+                            <p class="text-sm text-gray-600 mt-2 leading-relaxed">WHO将"性别认同障碍"从精神疾病名录移除，更名为"性别不一致"。跨性别不是病，而是一种生存状态。</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+        
+        <!-- 4. 资源搜索中心 (稳健完全版) -->
+<div id="tab-search" class="tab-content space-y-6">
+    <!-- 搜索筛选总卡片 -->
+    <div class="glass p-6 rounded-3xl shadow-sm border-b-4 border-pink-400">
+        <h2 class="text-2xl font-black text-gray-800 mb-2">云端资源库</h2>
+        <p class="text-xs text-gray-400 mb-6">检索 MTF 社群技术文档与 Wiki</p>
+        
+        <!-- 搜索框 -->
+        <div class="relative mb-4">
+            <input type="text" id="globalSearchInput" placeholder="输入搜索词..." 
+                   class="w-full pl-12 pr-4 py-4 rounded-2xl border-none glass-strong focus:ring-2 focus:ring-pink-300 outline-none text-sm shadow-inner">
+            <i data-lucide="search" class="absolute left-4 top-4 w-5 h-5 text-pink-400"></i>
+            <button onclick="performGlobalSearch(0)" class="absolute right-2 top-2 bg-pink-500 text-white px-5 py-2 rounded-xl text-xs font-bold hover:bg-pink-600 transition shadow-md">搜索</button>
+        </div>
+
+        <!-- 筛选网格 -->
+        <div class="grid grid-cols-2 gap-3 mt-4">
+            <div>
+                <label class="text-[10px] font-bold text-gray-400 ml-1">语言</label>
+                <select id="filterLang" class="w-full bg-white/40 border-none rounded-xl text-xs p-2 outline-none"><option value="all">全部</option><option value="zh-cn">简体</option><option value="zh-hant">繁体</option><option value="en">英语</option><option value="ja">日语</option></select>
+            </div>
+            <div>
+                <label class="text-[10px] font-bold text-gray-400 ml-1">字型</label>
+                <select id="filterScript" class="w-full bg-white/40 border-none rounded-xl text-xs p-2 outline-none"><option value="all">不限</option><option value="simplified">简体</option><option value="traditional">繁体</option></select>
+            </div>
+            <div class="col-span-2">
+                <label class="text-[10px] font-bold text-gray-400 ml-1">指定站点</label>
+                <input type="text" id="filterDomain" placeholder="如: mtf.wiki" class="w-full bg-white/40 border-none rounded-xl text-xs p-2 outline-none">
+            </div>
+            <!-- 标签筛选 (放在最底部，确保闭合) -->
+            <div class="col-span-2">
+                <label class="text-[10px] font-bold text-gray-400 ml-1">标签筛选</label>
+                <input type="text" id="filterTags" placeholder="如: 知识库, 手术" class="w-full bg-white/40 border-none rounded-xl text-xs p-2 outline-none">
+                </div>
+             <!-- 双模切换开关 -->
+<div class="col-span-2 mt-4 flex justify-between items-center bg-white/10 p-3 rounded-2xl border border-white/10">
+    <div class="flex flex-col">
+        <span class="text-xs font-bold text-gray-700 dark:text-gray-200">效率模式</span>
+        <span class="text-[9px] text-gray-400">开启后一次性载入4页结果</span>
+    </div>
+    
+    <!-- 历史搜索区域 (默认隐藏) -->
+<div id="historyContainer" class="col-span-2 mt-4 hidden animate-in fade-in duration-300">
+    <div class="flex justify-between items-center mb-2">
+        <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">历史搜索</span>
+        <button onclick="clearSearchHistory()" class="text-[10px] text-pink-400 hover:text-pink-600 font-bold active:scale-90 transition-all">清除</button>
+    </div>
+    <div id="searchHistory" class="flex flex-wrap gap-2">
+        <!-- 历史小药丸将渲染在此处 -->
+    </div>
+</div>
+    <label class="relative inline-block w-11 h-6 shrink-0">
+        <input type="checkbox" id="speedModeToggle" class="opacity-0 w-0 h-0">
+        <span class="slider absolute cursor-pointer inset-0 bg-gray-300 dark:bg-slate-700 rounded-full transition-all duration-300 before:content-[''] before:absolute before:h-4 before:w-4 before:left-1 before:bottom-1 before:bg-white before:rounded-full before:transition-all before:duration-300 before:shadow-md"></span>
+    </label>
+            </div>
+        </div>
+    </div> <!-- 结束搜索总卡片 -->
+
+    <!-- 分页容器 -->
+    <div id="pagination" class="flex justify-center items-center space-x-2 py-2 hidden"></div>
+
+    <!-- 结果容器 -->
+    <div id="globalResults" class="space-y-4"></div>
+</div> <!-- 结束 tab-search -->
+<!-- 后面紧接着应该是 <div id="tab-hrt" ...> -->
+
+        <!-- 5. HRT 中心 (全新) -->
+        <div id="tab-hrt" class="tab-content space-y-6">
+            <!-- HRT 概览卡片 -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div class="stat-card glass p-4 rounded-2xl text-center">
+                    <div class="text-2xl font-black text-pink-500" id="hrtDays">0</div>
+                    <div class="text-[11px] text-gray-400 mt-1 font-medium">HRT 天数</div>
+                </div>
+                <div class="stat-card glass p-4 rounded-2xl text-center">
+                    <div class="text-2xl font-black text-purple-500" id="medCount">0</div>
+                    <div class="text-[11px] text-gray-400 mt-1 font-medium">今日用药</div>
+                </div>
+                <div class="stat-card glass p-4 rounded-2xl text-center">
+                    <div class="text-2xl font-black text-blue-500" id="checkCount">0</div>
+                    <div class="text-[11px] text-gray-400 mt-1 font-medium">待检查项</div>
+                </div>
+                <div class="stat-card glass p-4 rounded-2xl text-center">
+                    <div class="text-2xl font-black text-orange-500" id="lastE2">--</div>
+                    <div class="text-[11px] text-gray-400 mt-1 font-medium">最新 E2</div>
+                </div>
+            </div>
+
+            <!-- 子标签 -->
+            <div class="flex overflow-x-auto space-x-2 pb-2 no-scrollbar">
+                <button onclick="switchHrtTab('hrt-track')" class="hrt-subtab active flex-shrink-0 glass px-5 py-2.5 rounded-full text-sm font-bold text-pink-600 border border-pink-200 bg-pink-50/50">追踪记录</button>
+                <button onclick="switchHrtTab('hrt-meds')" class="hrt-subtab flex-shrink-0 glass px-5 py-2.5 rounded-full text-sm font-bold text-gray-500 hover:bg-gray-50">用药管理</button>
+                <button onclick="switchHrtTab('hrt-body')" class="hrt-subtab flex-shrink-0 glass px-5 py-2.5 rounded-full text-sm font-bold text-gray-500 hover:bg-gray-50">身体变化</button>
+                <button onclick="switchHrtTab('hrt-timeline')" class="hrt-subtab flex-shrink-0 glass px-5 py-2.5 rounded-full text-sm font-bold text-gray-500 hover:bg-gray-50">变化时间线</button>
+                <button onclick="switchHrtTab('hrt-check')" class="hrt-subtab flex-shrink-0 glass px-5 py-2.5 rounded-full text-sm font-bold text-gray-500 hover:bg-gray-50">检查提醒</button>
+                <!-- 插入在子标签菜单的最后面 -->
+<button onclick="switchHrtTab('hrt-pk')" class="hrt-subtab flex-shrink-0 glass px-5 py-2.5 rounded-full text-sm font-bold text-gray-500 hover:bg-gray-50">给药模拟</button>
+            </div>
+
+            <!-- 追踪记录 -->
+            <div id="hrt-track" class="hrt-panel active space-y-5">
+                <div class="glass p-5 rounded-2xl">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-bold text-gray-700 flex items-center"><i data-lucide="activity" class="w-5 h-5 mr-2 text-pink-500"></i>激素指标追踪</h3>
+                        <button onclick="openModal('modal-hormone')" class="btn-primary text-white px-4 py-2 rounded-xl text-xs font-bold">+ 记录指标</button>
+                    </div>
+                    <div class="h-64 w-full"><canvas id="hormoneChart"></canvas></div>
+                    <div class="flex flex-wrap gap-3 mt-4 justify-center">
+                        <label class="flex items-center space-x-2 text-xs cursor-pointer">
+                            <input type="checkbox" checked onchange="toggleDataset(0)" class="accent-pink-500">
+                            <span class="text-gray-600">E2 (雌二醇)</span>
+                        </label>
+                        <label class="flex items-center space-x-2 text-xs cursor-pointer">
+                            <input type="checkbox" checked onchange="toggleDataset(1)" class="accent-blue-500">
+                            <span class="text-gray-600">T (睾酮)</span>
+                        </label>
+                        <label class="flex items-center space-x-2 text-xs cursor-pointer">
+                            <input type="checkbox" onchange="toggleDataset(2)" class="accent-purple-500">
+                            <span class="text-gray-600">P (孕酮)</span>
+                        </label>
+                        <label class="flex items-center space-x-2 text-xs cursor-pointer">
+                            <input type="checkbox" onchange="toggleDataset(3)" class="accent-orange-500">
+                            <span class="text-gray-600">LH</span>
+                        </label>
+                        <label class="flex items-center space-x-2 text-xs cursor-pointer">
+                            <input type="checkbox" onchange="toggleDataset(4)" class="accent-green-500">
+                            <span class="text-gray-600">FSH</span>
+                        </label>
+                        <label class="flex items-center space-x-2 text-xs cursor-pointer">
+                            <input type="checkbox" onchange="toggleDataset(5)" class="accent-red-500">
+                            <span class="text-gray-600">Prolactin</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="glass p-5 rounded-2xl">
+                    <h3 class="font-bold text-gray-700 mb-4 flex items-center"><i data-lucide="calendar-days" class="w-5 h-5 mr-2 text-pink-500"></i>用药日历</h3>
+                    <div class="grid grid-cols-7 gap-2 text-center mb-2">
+                        <div class="text-[10px] font-bold text-gray-400">日</div>
+                        <div class="text-[10px] font-bold text-gray-400">一</div>
+                        <div class="text-[10px] font-bold text-gray-400">二</div>
+                        <div class="text-[10px] font-bold text-gray-400">三</div>
+                        <div class="text-[10px] font-bold text-gray-400">四</div>
+                        <div class="text-[10px] font-bold text-gray-400">五</div>
+                        <div class="text-[10px] font-bold text-gray-400">六</div>
+                    </div>
+                    <div id="calendarGrid" class="grid grid-cols-7 gap-2"></div>
+                </div>
+
+                <div class="glass p-5 rounded-2xl">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-bold text-gray-700 flex items-center"><i data-lucide="file-bar-chart" class="w-5 h-5 mr-2 text-blue-500"></i>数据管理</h3>
+                    </div>
+                    <div class="flex gap-3">
+                        <button onclick="exportData()" class="flex-1 py-3 rounded-xl border-2 border-pink-200 text-pink-600 font-bold text-sm hover:bg-pink-50 transition flex items-center justify-center">
+                            <i data-lucide="download" class="w-4 h-4 mr-2"></i>导出数据
+                        </button>
+                        <button onclick="document.getElementById('importFile').click()" class="flex-1 py-3 rounded-xl border-2 border-blue-200 text-blue-600 font-bold text-sm hover:bg-blue-50 transition flex items-center justify-center">
+                            <i data-lucide="upload" class="w-4 h-4 mr-2"></i>导入数据
+                        </button>
+                        <input type="file" id="importFile" class="hidden" accept=".json" onchange="importData(this)">
+                    </div>
+                </div>
+            </div>
+
+            <!-- 用药管理 -->
+            <div id="hrt-meds" class="hrt-panel space-y-5 hidden">
+                <div class="glass p-5 rounded-2xl">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-bold text-gray-700 flex items-center"><i data-lucide="pill" class="w-5 h-5 mr-2 text-pink-500"></i>今日用药</h3>
+                        <button onclick="openModal('modal-med')" class="btn-primary text-white px-4 py-2 rounded-xl text-xs font-bold">+ 添加药物</button>
+                    </div>
+                    <div id="medList" class="space-y-3"></div>
+                </div>
+
+                <div class="glass p-5 rounded-2xl">
+                    <h3 class="font-bold text-gray-700 mb-4 flex items-center"><i data-lucide="calculator" class="w-5 h-5 mr-2 text-purple-500"></i>剂量参考计算器</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="space-y-3">
+                            <div>
+                                <label class="text-xs font-bold text-gray-500 block mb-1">药物类型</label>
+                                <select id="calcType" class="w-full p-2.5 rounded-xl border border-gray-200 text-sm bg-white/70 focus:ring-2 focus:ring-pink-300 outline-none">
+                                    <option value="ev">戊酸雌二醇 (补佳乐)</option>
+                                    <option value="gel">雌二醇凝胶</option>
+                                    <option value="patch">雌二醇贴片</option>
+                                    <option value="cpa">色普龙</option>
+                                    <option value="spi">螺内酯</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="text-xs font-bold text-gray-500 block mb-1">当前剂量</label>
+                                <input type="number" id="calcDose" placeholder="例如: 2" class="w-full p-2.5 rounded-xl border border-gray-200 text-sm bg-white/70 focus:ring-2 focus:ring-pink-300 outline-none">
+                            </div>
+                            <div>
+                                <label class="text-xs font-bold text-gray-500 block mb-1">单位</label>
+                                <select id="calcUnit" class="w-full p-2.5 rounded-xl border border-gray-200 text-sm bg-white/70 focus:ring-2 focus:ring-pink-300 outline-none">
+                                    <option value="mg">mg</option>
+                                    <option value="g">g (凝胶)</option>
+                                    <option value="patch">贴</option>
+                                </select>
+                            </div>
+                            <button onclick="calculateDose()" class="w-full btn-primary text-white py-2.5 rounded-xl text-sm font-bold">计算等效剂量</button>
+                        </div>
+                        <div class="bg-gradient-to-br from-pink-50 to-purple-50 p-5 rounded-xl border border-pink-100 flex flex-col justify-center">
+                            <div id="calcResult" class="text-center">
+                                <p class="text-sm text-gray-400">输入剂量后点击计算</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 身体变化 -->
+            <div id="hrt-body" class="hrt-panel space-y-5 hidden">
+                <div class="glass p-5 rounded-2xl">
+                    <h3 class="font-bold text-gray-700 mb-4 flex items-center"><i data-lucide="trending-up" class="w-5 h-5 mr-2 text-pink-500"></i>身体变化追踪</h3>
+                    <p class="text-xs text-gray-400 mb-4">定期记录各项变化，观察 HRT 效果进展</p>
+                    
+                    <div class="space-y-5" id="bodyTrackList">
+                        <!-- 动态生成 -->
+                    </div>
+                    
+                    <button onclick="saveBodyTrack()" class="w-full mt-4 btn-primary text-white py-3 rounded-xl text-sm font-bold">保存本期记录</button>
+                </div>
+
+                <div class="glass p-5 rounded-2xl">
+                    <h3 class="font-bold text-gray-700 mb-4 flex items-center"><i data-lucide="ruler" class="w-5 h-5 mr-2 text-blue-500"></i>身体数据</h3>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="text-xs font-bold text-gray-500 block mb-1">体重 (kg)</label>
+                            <input type="number" id="bodyWeight" class="w-full p-2.5 rounded-xl border border-gray-200 text-sm bg-white/70 focus:ring-2 focus:ring-pink-300 outline-none" placeholder="--">
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold text-gray-500 block mb-1">胸围 (cm)</label>
+                            <input type="number" id="bodyBust" class="w-full p-2.5 rounded-xl border border-gray-200 text-sm bg-white/70 focus:ring-2 focus:ring-pink-300 outline-none" placeholder="--">
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold text-gray-500 block mb-1">腰围 (cm)</label>
+                            <input type="number" id="bodyWaist" class="w-full p-2.5 rounded-xl border border-gray-200 text-sm bg-white/70 focus:ring-2 focus:ring-pink-300 outline-none" placeholder="--">
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold text-gray-500 block mb-1">臀围 (cm)</label>
+                            <input type="number" id="bodyHip" class="w-full p-2.5 rounded-xl border border-gray-200 text-sm bg-white/70 focus:ring-2 focus:ring-pink-300 outline-none" placeholder="--">
+                        </div>
+                    </div>
+                    <button onclick="saveBodySize()" class="w-full mt-4 bg-blue-500 text-white py-2.5 rounded-xl text-sm font-bold hover:bg-blue-600 transition">保存身体数据</button>
+                </div>
+            </div>
+
+            <!-- 变化时间线 -->
+            <div id="hrt-timeline" class="hrt-panel space-y-5 hidden">
+                <div class="glass p-5 rounded-2xl">
+                    <h3 class="font-bold text-gray-700 mb-4 flex items-center"><i data-lucide="clock" class="w-5 h-5 mr-2 text-pink-500"></i>HRT 预期变化时间线</h3>
+                    <p class="text-xs text-gray-400 mb-6">以下时间线为一般性参考，个体差异极大，受年龄、基因、剂量等因素影响。</p>
+                    
+                    <div class="space-y-4">
+                        <div class="flex gap-4">
+                            <div class="w-20 shrink-0 text-right">
+                                <span class="text-xs font-black text-pink-500">1-3 月</span>
+                            </div>
+                            <div class="flex-1 pb-4 border-l-2 border-pink-200 pl-4 relative">
+                                <div class="absolute -left-[5px] top-1 w-2 h-2 rounded-full bg-pink-400"></div>
+                                <h4 class="font-bold text-sm text-gray-700">初期变化</h4>
+                                <ul class="text-xs text-gray-500 mt-1 space-y-1">
+                                    <li>• 皮肤变软、油脂分泌减少</li>
+                                    <li>• 性欲下降、勃起减少</li>
+                                    <li>• 情绪波动可能增加</li>
+                                    <li>• 体毛生长速度减缓</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="flex gap-4">
+                            <div class="w-20 shrink-0 text-right">
+                                <span class="text-xs font-black text-pink-500">3-6 月</span>
+                            </div>
+                            <div class="flex-1 pb-4 border-l-2 border-pink-200 pl-4 relative">
+                                <div class="absolute -left-[5px] top-1 w-2 h-2 rounded-full bg-pink-400"></div>
+                                <h4 class="font-bold text-sm text-gray-700">明显发育期</h4>
+                                <ul class="text-xs text-gray-500 mt-1 space-y-1">
+                                    <li>• 乳腺开始发育（胀痛/敏感）</li>
+                                    <li>• 脂肪重新分布（臀部、大腿）</li>
+                                    <li>• 肌肉量减少、力量下降</li>
+                                    <li>• 面部轮廓轻微软化</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="flex gap-4">
+                            <div class="w-20 shrink-0 text-right">
+                                <span class="text-xs font-black text-pink-500">6-12 月</span>
+                            </div>
+                            <div class="flex-1 pb-4 border-l-2 border-pink-200 pl-4 relative">
+                                <div class="absolute -left-[5px] top-1 w-2 h-2 rounded-full bg-pink-400"></div>
+                                <h4 class="font-bold text-sm text-gray-700">稳定成长期</h4>
+                                <ul class="text-xs text-gray-500 mt-1 space-y-1">
+                                    <li>• 胸部持续发育（可达 Tanner 3-4 期）</li>
+                                    <li>• 体脂分布更女性化</li>
+                                    <li>• 体毛明显变细变少</li>
+                                    <li>• 头发可能变密、变亮</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="flex gap-4">
+                            <div class="w-20 shrink-0 text-right">
+                                <span class="text-xs font-black text-pink-500">1-2 年</span>
+                            </div>
+                            <div class="flex-1 pb-4 border-l-2 border-pink-200 pl-4 relative">
+                                <div class="absolute -left-[5px] top-1 w-2 h-2 rounded-full bg-pink-400"></div>
+                                <h4 class="font-bold text-sm text-gray-700">成熟稳定期</h4>
+                                <ul class="text-xs text-gray-500 mt-1 space-y-1">
+                                    <li>• 胸部发育接近最终大小</li>
+                                    <li>• 脂肪分布基本稳定</li>
+                                    <li>• 皮肤质地显著改善</li>
+                                    <li>• 声音不受激素影响（需训练）</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="flex gap-4">
+                            <div class="w-20 shrink-0 text-right">
+                                <span class="text-xs font-black text-pink-500">2-3 年+</span>
+                            </div>
+                            <div class="flex-1 pb-4 border-l-2 border-pink-200 pl-4 relative">
+                                <div class="absolute -left-[5px] top-1 w-2 h-2 rounded-full bg-pink-400"></div>
+                                <h4 class="font-bold text-sm text-gray-700">长期效果</h4>
+                                <ul class="text-xs text-gray-500 mt-1 space-y-1">
+                                    <li>• 所有变化趋于稳定</li>
+                                    <li>• 需持续用药维持</li>
+                                    <li>• 可考虑 FFS/SRS 等手术</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 检查提醒 -->
+            <div id="hrt-check" class="hrt-panel space-y-5 hidden">
+                <div class="glass p-5 rounded-2xl">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-bold text-gray-700 flex items-center"><i data-lucide="clipboard-check" class="w-5 h-5 mr-2 text-pink-500"></i>医学检查清单</h3>
+                        <button onclick="openModal('modal-check')" class="btn-primary text-white px-4 py-2 rounded-xl text-xs font-bold">+ 添加检查</button>
+                    </div>
+                    <div id="checkList" class="space-y-2"></div>
+                </div>
+
+                <div class="glass p-5 rounded-2xl">
+                    <h3 class="font-bold text-gray-700 mb-4 flex items-center"><i data-lucide="alert-triangle" class="w-5 h-5 mr-2 text-orange-500"></i>副作用记录</h3>
+                    <div class="space-y-3">
+                        <textarea id="sideEffectInput" rows="3" class="w-full p-3 rounded-xl border border-gray-200 text-sm bg-white/70 focus:ring-2 focus:ring-pink-300 outline-none resize-none" placeholder="记录你遇到的任何不适、副作用或身体变化..."></textarea>
+                        <div class="flex gap-2">
+                            <select id="sideEffectLevel" class="p-2 rounded-xl border border-gray-200 text-sm bg-white/70 focus:ring-2 focus:ring-pink-300 outline-none">
+                                <option value="mild">轻微</option>
+                                <option value="moderate">中等</option>
+                                <option value="severe">严重</option>
+                            </select>
+                            <button onclick="addSideEffect()" class="flex-1 bg-orange-500 text-white py-2 rounded-xl text-sm font-bold hover:bg-orange-600 transition">记录副作用</button>
+                        </div>
+                    </div>
+                    <div id="sideEffectList" class="mt-4 space-y-2"></div>
+                </div>
+
+                <div class="glass p-5 rounded-2xl bg-gradient-to-br from-pink-50 to-purple-50 border-pink-100">
+                    <h3 class="font-bold text-gray-700 mb-3 flex items-center"><i data-lucide="info" class="w-5 h-5 mr-2 text-pink-500"></i>建议检查频率</h3>
+                    <div class="space-y-2 text-xs text-gray-600">
+                        <div class="flex justify-between py-2 border-b border-pink-100"><span>激素水平 (E2, T, LH, FSH)</span><span class="font-bold text-pink-600">每 3 个月</span></div>
+                        <div class="flex justify-between py-2 border-b border-pink-100"><span>肝功能 (ALT, AST)</span><span class="font-bold text-pink-600">每 3-6 个月</span></div>
+                        <div class="flex justify-between py-2 border-b border-pink-100"><span>肾功能 + 电解质</span><span class="font-bold text-pink-600">每 6 个月</span></div>
+                        <div class="flex justify-between py-2 border-b border-pink-100"><span>血脂 + 血糖</span><span class="font-bold text-pink-600">每 6-12 个月</span></div>
+                        <div class="flex justify-between py-2 border-b border-pink-100"><span>凝血功能 (D-二聚体)</span><span class="font-bold text-pink-600">每 6-12 个月</span></div>
+                        <div class="flex justify-between py-2"><span>催乳素 (Prolactin)</span><span class="font-bold text-pink-600">每 6-12 个月</span></div>
+                    </div>
+                </div>
+           </div>
+      </div>          
+                <!-- 半衰期模拟器面板 -->
+<div id="hrt-pk" class="hrt-panel space-y-5 hidden">
+    <div class="glass p-5 rounded-2xl">
+        <h3 class="font-bold text-gray-700 mb-2 flex items-center"><i data-lucide="line-chart" class="w-5 h-5 mr-2 text-pink-500"></i>体内血药浓度曲线模拟 (14天)</h3>
+        <p class="text-[10px] text-gray-400 mb-4">基于药代理论公式（多剂量蓄积模型），模拟多次用药后的稳态血药浓度</p>
+        
+        <div class="h-64 w-full"><canvas id="pkChart"></canvas></div>
+    </div>
+
+    <!-- 交互控制面板 -->
+    <div class="glass p-5 rounded-2xl grid grid-cols-2 gap-4">
+        <div>
+            <label class="text-xs font-bold text-gray-500 block mb-1">药品类型</label>
+            <select id="pkMedType" onchange="adaptPkRoutes()" class="w-full p-2.5 rounded-xl border-none bg-white/40 text-xs outline-none">
+                <option value="ev">戊酸雌二醇 (补佳乐)</option>
+                <option value="een">庚酸雌二醇 (EEn 注射)</option>
+                <option value="cpa">色普龙 (醋酸环丙孕酮)</option>
+                <option value="spiro">螺内酯</option>
+            </select>
+        </div>
+        <div>
+            <label class="text-xs font-bold text-gray-500 block mb-1">给药途径</label>
+            <select id="pkRoute" class="w-full p-2.5 rounded-xl border-none bg-white/40 text-xs outline-none">
+                <!-- 动态生成 -->
+            </select>
+        </div>
+        <div>
+            <label class="text-xs font-bold text-gray-500 block mb-1">单次剂量 (mg)</label>
+            <input type="number" id="pkDose" value="2" class="w-full p-2 rounded-xl border-none bg-white/40 text-xs outline-none">
+        </div>
+        <div>
+            <label class="text-xs font-bold text-gray-500 block mb-1">给药间隔 (天)</label>
+            <input type="number" id="pkInterval" value="1" class="w-full p-2 rounded-xl border-none bg-white/40 text-xs outline-none">
+        </div>
+        
+        <button onclick="simulatePharmacokinetics()" class="col-span-2 btn-primary text-white py-3 rounded-2xl text-xs font-bold transition-all shadow-md">
+            开始模拟血药浓度
+        </button>
+    </div>
+
+    <!-- 科学减害提示 -->
+    <div class="glass p-4 rounded-xl bg-gradient-to-r from-pink-500/5 to-purple-500/5 border-l-4 border-pink-400">
+        <h4 class="text-xs font-bold text-gray-700 flex items-center"><i data-lucide="brain" class="w-4 h-4 mr-1 text-pink-400"></i> 什么是稳态蓄积？</h4>
+        <p class="text-[10px] text-gray-500 leading-relaxed mt-1">
+            药物在体内有半衰期。当你按固定间隔（如每天）重复给药时，前一次未代谢完的药会与新药累加，使浓度逐渐上升，最终在 4-5 个半衰期后达到“稳态（Steady State）”。模拟能帮你清晰看到波峰（Peak）与波谷（Trough），避免浓度波动过大。
+                </p>
+              </div>        
+           </div>
+      </div>
+</div>
+        
+
+        <!-- 4. 工具箱 -->
+        <div id="tab-tools" class="tab-content space-y-6">
+            <section class="glass p-6 rounded-2xl shadow-sm">
+                <h2 class="text-xl font-bold mb-4 flex items-center text-pink-500"><i data-lucide="mic-2" class="mr-2 w-5 h-5"></i>声音频率分析</h2>
+                <div class="bg-gray-900 rounded-2xl p-6 text-center relative overflow-hidden">
+                    <div class="absolute inset-0 bg-gradient-to-br from-pink-500/10 to-purple-500/10"></div>
+                    <div class="relative z-10">
+                        <div id="freq-val" class="text-5xl font-mono text-white mb-2 font-light">--- <span class="text-lg text-gray-500 font-normal">Hz</span></div>
+                        <div id="freq-label" class="text-sm text-gray-400 mb-6">点击下方按钮开始实时分析</div>
+                        <canvas id="voiceCanvas" class="w-full h-24 mb-6 rounded-lg"></canvas>
+                        <button id="startMic" class="w-full py-4 rounded-xl bg-gradient-to-r from-pink-500 to-purple-600 text-white font-bold flex justify-center items-center hover:shadow-lg transition shadow-lg">
+                            <i data-lucide="play-circle" class="mr-2 w-5 h-5"></i> 开始分析
+                        </button>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- 高阶多指标激素单位换算器 (V2.7) -->
+<section class="glass p-6 rounded-2xl shadow-sm mt-6">
+    <h2 class="text-xl font-bold mb-4 flex items-center text-purple-500">
+        <i data-lucide="refresh-cw" class="mr-2 w-5 h-5"></i> 激素单位换算
+    </h2>
+    <div class="space-y-4">
+        <!-- 1. 选择激素类型 -->
+        <div>
+            <label class="text-[10px] font-bold text-gray-400 block mb-1 uppercase tracking-wider">选择激素类型</label>
+            <select id="convType" onchange="onConvTypeChange()" class="w-full p-3 rounded-xl border-none bg-white/40 text-xs outline-none">
+                <option value="E2">雌二醇 (E2)</option>
+                <option value="T">睾酮 (T)</option>
+                <option value="PRL">泌乳素 (PRL)</option>
+                <option value="P4">孕酮 (P4)</option>
+                <option value="FSH">卵泡刺激素 (FSH)</option>
+                <option value="LH">促黄体素 (LH)</option>
+            </select>
+        </div>
+
+        <!-- 2. 输入数值与原始单位 -->
+        <div class="grid grid-cols-3 gap-2">
+            <div class="col-span-2">
+                <label class="text-[10px] font-bold text-gray-400 block mb-1 uppercase tracking-wider">输入数值</label>
+                <input type="number" id="convInput" oninput="calculateConversion()" placeholder="0.0" class="w-full p-3 rounded-xl border-none bg-white/40 text-xs outline-none">
+            </div>
+            <div>
+                <label class="text-[10px] font-bold text-gray-400 block mb-1 uppercase tracking-wider">原始单位</label>
+                <select id="convFromUnit" onchange="calculateConversion()" class="w-full p-3 rounded-xl border-none bg-white/40 text-xs outline-none">
+                    <!-- 动态生成 -->
+                </select>
+            </div>
+        </div>
+
+        <div class="text-center py-1">
+            <i data-lucide="arrow-down" class="w-4 h-4 mx-auto text-pink-400"></i>
+        </div>
+
+        <!-- 3. 输出数值与目标单位 -->
+        <div class="grid grid-cols-3 gap-2">
+            <div class="col-span-2">
+                <label class="text-[10px] font-bold text-gray-400 block mb-1 uppercase tracking-wider">转换结果</label>
+                <input type="text" id="convOutput" readonly class="w-full p-3 rounded-xl border-none bg-white/40 text-xs font-bold text-pink-600 outline-none" placeholder="—">
+            </div>
+            <div>
+                <label class="text-[10px] font-bold text-gray-400 block mb-1 uppercase tracking-wider">目标单位</label>
+                <select id="convToUnit" onchange="calculateConversion()" class="w-full p-3 rounded-xl border-none bg-white/40 text-xs outline-none">
+                    <!-- 动态生成 -->
+                </select>
+            </div>
+        </div>
+    </div>
+</section>
+
+            <section class="glass p-6 rounded-2xl shadow-sm">
+                <h2 class="text-xl font-bold mb-4 flex items-center text-blue-500"><i data-lucide="calculator" class="mr-2 w-5 h-5"></i>BMI 计算器</h2>
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="text-xs font-bold text-gray-500 block mb-1">身高 (cm)</label>
+                        <input type="number" id="bmiHeight" class="w-full p-3 rounded-xl border border-gray-200 text-sm bg-white/70 focus:ring-2 focus:ring-blue-300 outline-none" placeholder="170">
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-gray-500 block mb-1">体重 (kg)</label>
+                        <input type="number" id="bmiWeight" class="w-full p-3 rounded-xl border border-gray-200 text-sm bg-white/70 focus:ring-2 focus:ring-blue-300 outline-none" placeholder="60">
+                    </div>
+                </div>
+                <button onclick="calcBMI()" class="w-full bg-blue-500 text-white py-3 rounded-xl text-sm font-bold hover:bg-blue-600 transition mb-4">计算 BMI</button>
+                <div id="bmiResult" class="hidden bg-white/60 p-4 rounded-xl text-center">
+                    <div class="text-3xl font-black text-gray-800" id="bmiValue">--</div>
+                    <div class="text-sm text-gray-500 mt-1" id="bmiStatus">--</div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- 底部导航 -->
+    <nav class="fixed bottom-4 left-4 right-4 h-16 glass-strong shadow-2xl flex items-center justify-around px-2 z-50 rounded-2xl">
+    <button onclick="switchTab('tab-home', this)" class="nav-item active flex flex-col items-center justify-center w-16 h-12 transition-all">
+        <i data-lucide="home" class="w-5 h-5 mb-0.5"></i><span class="text-[9px] font-bold">主页</span>
+    </button>
+    <button onclick="switchTab('tab-knowledge', this)" class="nav-item flex flex-col items-center justify-center w-16 h-12 transition-all text-gray-400">
+        <i data-lucide="book-open" class="w-5 h-5 mb-0.5"></i><span class="text-[9px] font-bold">知识</span>
+    </button>
+    
+    <!-- 中间的大按钮：改为资源搜索 -->
+    <button onclick="switchTab('tab-search', this)" class="nav-item flex flex-col items-center justify-center w-20 h-12 transition-all text-gray-400 relative">
+        <div class="absolute -top-4 bg-gradient-to-br from-pink-500 to-purple-600 p-3 rounded-full shadow-lg shadow-pink-500/30 border-2 border-white">
+            <i data-lucide="search" class="w-6 h-6 text-white"></i>
+        </div>
+        <span class="text-[9px] font-bold mt-6">探索</span>
+    </button>
+
+    <button onclick="switchTab('tab-hrt', this)" class="nav-item flex flex-col items-center justify-center w-16 h-12 transition-all text-gray-400">
+        <i data-lucide="heart-pulse" class="w-5 h-5 mb-0.5"></i><span class="text-[9px] font-bold">HRT</span>
+    </button>
+    <button onclick="switchTab('tab-tools', this)" class="nav-item flex flex-col items-center justify-center w-16 h-12 transition-all text-gray-400">
+        <i data-lucide="wrench" class="w-5 h-5 mb-0.5"></i><span class="text-[9px] font-bold">工具</span>
+    </button>
+</nav>
+
+    <!-- Modals -->
+    <div id="modal-hormone" class="modal">
+        <div class="modal-content glass-strong w-full max-w-md rounded-2xl p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="font-bold text-lg text-gray-800">记录激素指标</h3>
+                <button onclick="closeModal('modal-hormone')" class="p-1 hover:bg-gray-100 rounded-lg"><i data-lucide="x" class="w-5 h-5 text-gray-500"></i></button>
+            </div>
+            <div class="space-y-3">
+                <div>
+                    <label class="text-xs font-bold text-gray-500 block mb-1">日期</label>
+                    <input type="date" id="hormoneDate" class="w-full p-2.5 rounded-xl border border-gray-200 text-sm bg-white/70 focus:ring-2 focus:ring-pink-300 outline-none">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div><label class="text-xs font-bold text-gray-500 block mb-1">E2 (pg/mL)</label><input type="number" id="hormoneE2" class="w-full p-2.5 rounded-xl border border-gray-200 text-sm bg-white/70 focus:ring-2 focus:ring-pink-300 outline-none" placeholder="0"></div>
+                    <div><label class="text-xs font-bold text-gray-500 block mb-1">T (ng/dL)</label><input type="number" id="hormoneT" class="w-full p-2.5 rounded-xl border border-gray-200 text-sm bg-white/70 focus:ring-2 focus:ring-pink-300 outline-none" placeholder="0"></div>
+                    <div><label class="text-xs font-bold text-gray-500 block mb-1">P (ng/mL)</label><input type="number" id="hormoneP" class="w-full p-2.5 rounded-xl border border-gray-200 text-sm bg-white/70 focus:ring-2 focus:ring-pink-300 outline-none" placeholder="可选"></div>
+                    <div><label class="text-xs font-bold text-gray-500 block mb-1">LH (mIU/mL)</label><input type="number" id="hormoneLH" class="w-full p-2.5 rounded-xl border border-gray-200 text-sm bg-white/70 focus:ring-2 focus:ring-pink-300 outline-none" placeholder="可选"></div>
+                    <div><label class="text-xs font-bold text-gray-500 block mb-1">FSH (mIU/mL)</label><input type="number" id="hormoneFSH" class="w-full p-2.5 rounded-xl border border-gray-200 text-sm bg-white/70 focus:ring-2 focus:ring-pink-300 outline-none" placeholder="可选"></div>
+                    <div><label class="text-xs font-bold text-gray-500 block mb-1">Prolactin (ng/mL)</label><input type="number" id="hormoneProl" class="w-full p-2.5 rounded-xl border border-gray-200 text-sm bg-white/70 focus:ring-2 focus:ring-pink-300 outline-none" placeholder="可选"></div>
+                </div>
+                <button onclick="saveHormone()" class="w-full btn-primary text-white py-3 rounded-xl text-sm font-bold mt-2">保存记录</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-med" class="modal">
+        <div class="modal-content glass-strong w-full max-w-md rounded-2xl p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="font-bold text-lg text-gray-800">添加药物</h3>
+                <button onclick="closeModal('modal-med')" class="p-1 hover:bg-gray-100 rounded-lg"><i data-lucide="x" class="w-5 h-5 text-gray-500"></i></button>
+            </div>
+            <div class="space-y-3">
+                <div>
+                    <label class="text-xs font-bold text-gray-500 block mb-1">药物名称</label>
+                    <input type="text" id="medName" class="w-full p-2.5 rounded-xl border border-gray-200 text-sm bg-white/70 focus:ring-2 focus:ring-pink-300 outline-none" placeholder="例如: 补佳乐">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div><label class="text-xs font-bold text-gray-500 block mb-1">剂量</label><input type="text" id="medDose" class="w-full p-2.5 rounded-xl border border-gray-200 text-sm bg-white/70 focus:ring-2 focus:ring-pink-300 outline-none" placeholder="2mg"></div>
+                    <div><label class="text-xs font-bold text-gray-500 block mb-1">频率</label>
+                        <select id="medFreq" class="w-full p-2.5 rounded-xl border border-gray-200 text-sm bg-white/70 focus:ring-2 focus:ring-pink-300 outline-none">
+                            <option value="daily">每日</option>
+                            <option value="weekly">每周</option>
+                            <option value="biweekly">每两周</option>
+                            <option value="monthly">每月</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-gray-500 block mb-1">服用时间</label>
+                    <input type="time" id="medTime" class="w-full p-2.5 rounded-xl border border-gray-200 text-sm bg-white/70 focus:ring-2 focus:ring-pink-300 outline-none">
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-gray-500 block mb-1">备注</label>
+                    <input type="text" id="medNote" class="w-full p-2.5 rounded-xl border border-gray-200 text-sm bg-white/70 focus:ring-2 focus:ring-pink-300 outline-none" placeholder="例如: 随餐服用">
+                </div>
+                <button onclick="saveMed()" class="w-full btn-primary text-white py-3 rounded-xl text-sm font-bold mt-2">添加药物</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-check" class="modal">
+        <div class="modal-content glass-strong w-full max-w-md rounded-2xl p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="font-bold text-lg text-gray-800">添加检查提醒</h3>
+                <button onclick="closeModal('modal-check')" class="p-1 hover:bg-gray-100 rounded-lg"><i data-lucide="x" class="w-5 h-5 text-gray-500"></i></button>
+            </div>
+            <div class="space-y-3">
+                <div>
+                    <label class="text-xs font-bold text-gray-500 block mb-1">检查项目</label>
+                    <input type="text" id="checkName" class="w-full p-2.5 rounded-xl border border-gray-200 text-sm bg-white/70 focus:ring-2 focus:ring-pink-300 outline-none" placeholder="例如: 肝功能检查">
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-gray-500 block mb-1">建议检查日期</label>
+                    <input type="date" id="checkDate" class="w-full p-2.5 rounded-xl border border-gray-200 text-sm bg-white/70 focus:ring-2 focus:ring-pink-300 outline-none">
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-gray-500 block mb-1">备注</label>
+                    <input type="text" id="checkNote" class="w-full p-2.5 rounded-xl border border-gray-200 text-sm bg-white/70 focus:ring-2 focus:ring-pink-300 outline-none" placeholder="例如: 空腹">
+                </div>
+                <button onclick="saveCheck()" class="w-full btn-primary text-white py-3 rounded-xl text-sm font-bold mt-2">添加提醒</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            // ========== 音效管理器 ==========
+            const SoundManager = {
+                ctx: null,
+                enabled: true,
+                init() {
+                    try {
+                        this.ctx = new(window.AudioContext || window.webkitAudioContext)();
+                    } catch (e) { console.warn('Web Audio API 不可用'); }
+                    this.loadSoundPreference();
+                },
+                loadSoundPreference() {
+                    const saved = localStorage.getItem('mtf_sound_enabled');
+                    if (saved !== null) this.enabled = saved === 'true';
+                    const toggle = document.getElementById('soundToggle');
+                    if (toggle) toggle.checked = this.enabled;
+                },
+                saveSoundPreference() {
+                    localStorage.setItem('mtf_sound_enabled', this.enabled);
+                },
+                playTone(freq, duration, type='sine', vol=0.15) {
+                    if (!this.enabled || !this.ctx) return;
+                    try {
+                        const osc = this.ctx.createOscillator();
+                        const gain = this.ctx.createGain();
+                        osc.type = type;
+                        osc.connect(gain);
+                        gain.connect(this.ctx.destination);
+                        osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+                        gain.gain.setValueAtTime(vol, this.ctx.currentTime);
+                        gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duration);
+                        osc.start(this.ctx.currentTime);
+                        osc.stop(this.ctx.currentTime + duration);
+                    } catch (e) {}
+                },
+                playClick() { this.playTone(880, 0.08, 'sine', 0.1); },
+                playHover() { this.playTone(1320, 0.05, 'sine', 0.05); },
+                playTab() { this.playTone(660, 0.12, 'sine', 0.12); this.playTone(880, 0.12, 'sine', 0.12); },
+                playSuccess() {
+                    [523.25, 659.25, 783.99, 1046.50].forEach((f, i) => {
+                        setTimeout(() => this.playTone(f, 0.3, 'sine', 0.12), i * 80);
+                    });
+                }
+            };
+            SoundManager.init();
+            document.getElementById('soundToggle').addEventListener('change', function(e) {
+                SoundManager.enabled = e.target.checked;
+                SoundManager.saveSoundPreference();
+            });
+            document.body.addEventListener('click', function(e) {
+                const target = e.target.closest('button, a, .calendar-day, .check-item');
+                if (target) SoundManager.playClick();
+            });
+            document.body.addEventListener('mouseenter', function(e) {
+                if (!window.matchMedia('(hover: hover)').matches) return;
+                const target = e.target.closest('button, a, .card-hover');
+                if (target) SoundManager.playHover();
+            }, true);
+
+            // ========== 标签页切换 ==========
+            window.switchTab = function(tabId, btn) {
+            document.querySelectorAll('.hrt-panel').forEach(p => p.classList.add('hidden'));
+
+        document.querySelectorAll('.tab-content').forEach(tab => {
+            tab.classList.remove('active', 'show');
+        });
+                
+                const target = document.getElementById(tabId);
+                target.classList.add('active');
+                setTimeout(() => target.classList.add('show'), 10);
+                
+                document.querySelectorAll('.nav-item').forEach(b => {
+                    b.classList.remove('active');
+                    b.classList.add('text-gray-400');
+                });
+                btn.classList.add('active');
+                btn.classList.remove('text-gray-400');
+                SoundManager.playTab();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                
+                if (tabId === 'tab-hrt') refreshHrtStats();
+            };
+
+            window.scrollToSection = function(id) {
+                const el = document.getElementById(id);
+                if (!el) return;
+                const offset = 100;
+                const rect = el.getBoundingClientRect();
+                window.scrollTo({ top: window.scrollY + rect.top - offset, behavior: 'smooth' });
+            };
+
+            // ========== HRT 子标签 ==========
+            window.switchHrtTab = function(panelId) {
+                document.querySelectorAll('.hrt-panel').forEach(p => p.classList.add('hidden'));
+                document.querySelectorAll('.hrt-panel').forEach(p => p.classList.remove('active'));
+                document.getElementById(panelId).classList.remove('hidden');
+                document.getElementById(panelId).classList.add('active');
+                
+                document.querySelectorAll('.hrt-subtab').forEach(b => {
+                    b.classList.remove('active', 'text-pink-600', 'border-pink-200', 'bg-pink-50/50');
+                    b.classList.add('text-gray-500');
+                });
+                event.target.classList.add('active', 'text-pink-600', 'border-pink-200', 'bg-pink-50/50');
+                event.target.classList.remove('text-gray-500');
+            };
+
+            // ========== 术语过滤 ==========
+            const termSearchInput = document.getElementById('termSearch');
+            const catButtons = document.getElementById('catButtons');
+            let currentCat = 'all';
+            let currentSearch = '';
+
+            function applyFilters() {
+                const cards = document.querySelectorAll('#termsGrid .term-card');
+                const searchTerm = currentSearch.toLowerCase();
+                cards.forEach(card => {
+                    const cat = card.getAttribute('data-cat');
+                    const text = card.innerText.toLowerCase();
+                    const matchesCat = (currentCat === 'all' || cat === currentCat);
+                    const matchesSearch = (searchTerm === '' || text.includes(searchTerm));
+                    card.style.display = (matchesCat && matchesSearch) ? '' : 'none';
+                });
+            }
+            termSearchInput.addEventListener('input', function() { currentSearch = this.value; applyFilters(); });
+            catButtons.addEventListener('click', function(e) {
+                const btn = e.target.closest('button');
+                if (!btn) return;
+                currentCat = btn.getAttribute('data-cat');
+                catButtons.querySelectorAll('.pill').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                applyFilters();
+            });
+
+            // ========== 数据存储 ==========
+            const DB = {
+                get(key, def) { try { return JSON.parse(localStorage.getItem('mtf_' + key)) || def; } catch(e) { return def; } },
+                set(key, val) { localStorage.setItem('mtf_' + key, JSON.stringify(val)); }
+            };
+
+            // ========== 激素图表 ==========
+            let hormoneChart;
+            const hormoneData = DB.get('hormone', []);
+            
+            function initHormoneChart() {
+                const ctx = document.getElementById('hormoneChart').getContext('2d');
+                const labels = hormoneData.map(d => d.date);
+                const datasets = [
+                    { label: 'E2 (pg/mL)', data: hormoneData.map(d => d.e2), borderColor: '#ec4899', backgroundColor: 'rgba(236,72,153,0.1)', tension: 0.4, fill: true },
+                    { label: 'T (ng/dL)', data: hormoneData.map(d => d.t), borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.1)', tension: 0.4, fill: true },
+                    { label: 'P (ng/mL)', data: hormoneData.map(d => d.p), borderColor: '#8b5cf6', backgroundColor: 'rgba(139,92,246,0.1)', tension: 0.4, fill: true, hidden: true },
+                    { label: 'LH', data: hormoneData.map(d => d.lh), borderColor: '#f97316', backgroundColor: 'rgba(249,115,22,0.1)', tension: 0.4, fill: true, hidden: true },
+                    { label: 'FSH', data: hormoneData.map(d => d.fsh), borderColor: '#22c55e', backgroundColor: 'rgba(34,197,94,0.1)', tension: 0.4, fill: true, hidden: true },
+                    { label: 'Prolactin', data: hormoneData.map(d => d.prol), borderColor: '#ef4444', backgroundColor: 'rgba(239,68,68,0.1)', tension: 0.4, fill: true, hidden: true },
+                ];
+                hormoneChart = new Chart(ctx, {
+                    type: 'line',
+                    data: { labels, datasets },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        interaction: { mode: 'index', intersect: false },
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.03)' } },
+                            x: { grid: { display: false }, ticks: { maxRotation: 45, minRotation: 45, font: { size: 10 } } }
+                        }
+                    }
+                });
+            }
+            
+            // ========== 隐私锁逻辑 ==========
+    let pinBuffer = "";
+    let isSettingMode = false;
+
+    window.initPrivacyLock = function() {
+        const savedPin = localStorage.getItem('mtf_privacy_pin');
+        const lockEl = document.getElementById('privacyLock');
+        
+        if (!savedPin) {
+            // 如果没设置过，进入“设置模式”
+            isSettingMode = true;
+            document.getElementById('lockTitle').innerText = "设置隐私码";
+            document.getElementById('lockDesc').innerText = "请设定 4 位数字以保护您的数据";
+        }
+        lockEl.classList.remove('hidden'); // 显示锁屏
+        lucide.createIcons();
+    };
+
+    window.pressPin = function(val) {
+        if (val === 'del') {
+            pinBuffer = pinBuffer.slice(0, -1);
+        } else if (pinBuffer.length < 4) {
+            pinBuffer += val;
+            SoundManager.playTone(660 + pinBuffer.length * 40, 0.05); // 按键反馈声
+        }
+
+        // 更新点亮的小圆点
+        for (let i = 0; i < 4; i++) {
+            const dot = document.getElementById(`dot-${i}`);
+            if (i < pinBuffer.length) {
+                dot.classList.add('bg-pink-500', 'border-pink-500', 'scale-125');
+            } else {
+                dot.classList.remove('bg-pink-500', 'border-pink-500', 'scale-125');
+            }
+        }
+
+        if (pinBuffer.length === 4) {
+            setTimeout(checkPin, 300); // 输完 4 位自动检查
+        }
+    };
+
+    function checkPin() {
+        const savedPin = localStorage.getItem('mtf_privacy_pin');
+
+        if (isSettingMode) {
+            // 设置模式：保存密码并解锁
+            localStorage.setItem('mtf_privacy_pin', pinBuffer);
+            alert('隐私码已成功设置！');
+            unlockApp();
+        } else if (pinBuffer === savedPin) {
+            // 验证模式：正确则解锁
+            unlockApp();
+        } else {
+            // 验证模式：错误
+            alert('隐私码错误，请重新输入');
+            clearPin();
+        }
+    }
+
+    function unlockApp() {
+        const lockEl = document.getElementById('privacyLock');
+        lockEl.style.transition = 'all 0.5s ease';
+        lockEl.style.opacity = '0';
+        lockEl.style.transform = 'scale(1.1)';
+        setTimeout(() => lockEl.classList.add('hidden'), 500);
+        SoundManager.playSuccess();
+        pinBuffer = "";
+    }
+
+    window.clearPin = function() {
+        pinBuffer = "";
+        for (let i = 0; i < 4; i++) {
+            document.getElementById(`dot-${i}`).classList.remove('bg-pink-500', 'border-pink-500', 'scale-125');
+        }
+    };
+
+            window.toggleDataset = function(index) {
+                const meta = hormoneChart.getDatasetMeta(index);
+                meta.hidden = meta.hidden === null ? !hormoneChart.data.datasets[index].hidden : null;
+                hormoneChart.update();
+            };
+
+            window.saveHormone = function() {
+                const date = document.getElementById('hormoneDate').value;
+                if (!date) return alert('请选择日期');
+                const record = {
+                    date,
+                    e2: parseFloat(document.getElementById('hormoneE2').value) || null,
+                    t: parseFloat(document.getElementById('hormoneT').value) || null,
+                    p: parseFloat(document.getElementById('hormoneP').value) || null,
+                    lh: parseFloat(document.getElementById('hormoneLH').value) || null,
+                    fsh: parseFloat(document.getElementById('hormoneFSH').value) || null,
+                    prol: parseFloat(document.getElementById('hormoneProl').value) || null,
+                };
+                const existing = hormoneData.findIndex(d => d.date === date);
+                if (existing >= 0) hormoneData[existing] = record;
+                else hormoneData.push(record);
+                hormoneData.sort((a, b) => a.date.localeCompare(b.date));
+                DB.set('hormone', hormoneData);
+                
+                hormoneChart.data.labels = hormoneData.map(d => d.date);
+                hormoneChart.data.datasets[0].data = hormoneData.map(d => d.e2);
+                hormoneChart.data.datasets[1].data = hormoneData.map(d => d.t);
+                hormoneChart.data.datasets[2].data = hormoneData.map(d => d.p);
+                hormoneChart.data.datasets[3].data = hormoneData.map(d => d.lh);
+                hormoneChart.data.datasets[4].data = hormoneData.map(d => d.fsh);
+                hormoneChart.data.datasets[5].data = hormoneData.map(d => d.prol);
+                hormoneChart.update();
+                
+                closeModal('modal-hormone');
+                SoundManager.playSuccess();
+                refreshHrtStats();
+                renderCalendar();
+            };
+
+            // ========== 用药管理 ==========
+            let meds = DB.get('meds', []);
+            let medRecords = DB.get('medRecords', {});
+
+            function renderMeds() {
+                const list = document.getElementById('medList');
+                const today = new Date().toISOString().split('T')[0];
+                if (meds.length === 0) {
+                    list.innerHTML = '<p class="text-center text-gray-400 text-sm py-8">暂无药物，点击右上角添加</p>';
+                    return;
+                }
+                list.innerHTML = meds.map((med, idx) => {
+                    const taken = (medRecords[today] || []).includes(idx);
+                    return `
+                        <div class="med-card ${taken ? 'taken' : ''} bg-white/60 p-4 rounded-xl border border-gray-100 flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-full ${taken ? 'bg-gray-200' : 'bg-gradient-to-br from-pink-100 to-purple-100'} flex items-center justify-center">
+                                    <i data-lucide="pill" class="w-5 h-5 ${taken ? 'text-gray-400' : 'text-pink-500'}"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-sm ${taken ? 'text-gray-400 line-through' : 'text-gray-700'}">${med.name}</h4>
+                                    <p class="text-[11px] text-gray-400">${med.dose} · ${med.freq === 'daily' ? '每日' : med.freq === 'weekly' ? '每周' : med.freq === 'biweekly' ? '每两周' : '每月'} ${med.time ? '· ' + med.time : ''}</p>
+                                    ${med.note ? `<p class="text-[10px] text-gray-400 mt-0.5">${med.note}</p>` : ''}
+                                </div>
+                            </div>
+                            <button onclick="toggleMed(${idx})" class="px-4 py-2 rounded-xl text-xs font-bold ${taken ? 'bg-gray-200 text-gray-500' : 'btn-primary text-white'}">
+                                ${taken ? '已服' : '服用'}
+                            </button>
+                        </div>
+                    `;
+                }).join('');
+                lucide.createIcons();
+            }
+
+            window.toggleMed = function(idx) {
+                const today = new Date().toISOString().split('T')[0];
+                if (!medRecords[today]) medRecords[today] = [];
+                const pos = medRecords[today].indexOf(idx);
+                if (pos >= 0) medRecords[today].splice(pos, 1);
+                else medRecords[today].push(idx);
+                DB.set('medRecords', medRecords);
+                renderMeds();
+                renderCalendar();
+                refreshHrtStats();
+                if (pos < 0) SoundManager.playSuccess();
+            };
+
+            window.saveMed = function() {
+                const name = document.getElementById('medName').value;
+                if (!name) return alert('请输入药物名称');
+                meds.push({
+                    name,
+                    dose: document.getElementById('medDose').value || '',
+                    freq: document.getElementById('medFreq').value,
+                    time: document.getElementById('medTime').value,
+                    note: document.getElementById('medNote').value
+                });
+                DB.set('meds', meds);
+                closeModal('modal-med');
+                renderMeds();
+                SoundManager.playSuccess();
+                refreshHrtStats();
+            };
+
+            // ========== 日历 ==========
+            function renderCalendar() {
+                const grid = document.getElementById('calendarGrid');
+                const now = new Date();
+                const year = now.getFullYear();
+                const month = now.getMonth();
+                const firstDay = new Date(year, month, 1).getDay();
+                const daysInMonth = new Date(year, month + 1, 0).getDate();
+                const today = now.toISOString().split('T')[0];
+                
+                let html = '';
+                for (let i = 0; i < firstDay; i++) html += '<div class="calendar-day empty"></div>';
+                for (let d = 1; d <= daysInMonth; d++) {
+                    const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+                    const hasRecord = hormoneData.some(h => h.date === dateStr) || medRecords[dateStr]?.length > 0;
+                    const isToday = dateStr === today;
+                    html += `<div class="calendar-day ${hasRecord ? 'has-record' : ''} ${isToday ? 'today' : ''}" onclick="showDayDetail('${dateStr}')">${d}</div>`;
+                }
+                grid.innerHTML = html;
+            }
+
+            window.showDayDetail = function(date) {
+                const records = [];
+                const h = hormoneData.find(x => x.date === date);
+                if (h) records.push(`激素: E2=${h.e2||'-'} T=${h.t||'-'}`);
+                const m = medRecords[date];
+                if (m && m.length > 0) records.push(`用药: ${m.length} 种`);
+                alert(date + '\n' + (records.length ? records.join('\n') : '无记录'));
+            };
+
+            // ========== 检查提醒 ==========
+            let checks = DB.get('checks', []);
+
+            function renderChecks() {
+                const list = document.getElementById('checkList');
+                const today = new Date().toISOString().split('T')[0];
+                checks.sort((a, b) => a.date.localeCompare(b.date));
+                if (checks.length === 0) {
+                    list.innerHTML = '<p class="text-center text-gray-400 text-sm py-8">暂无检查项</p>';
+                    return;
+                }
+                list.innerHTML = checks.map((check, idx) => {
+                    const overdue = check.date < today && !check.done;
+                    return `
+                        <div class="check-item ${check.done ? 'opacity-50' : ''} bg-white/60 p-3 rounded-xl border border-gray-100 flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <input type="checkbox" ${check.done ? 'checked' : ''} onchange="toggleCheck(${idx})" class="w-5 h-5 accent-pink-500 rounded">
+                                <div>
+                                    <h4 class="font-bold text-sm ${check.done ? 'line-through text-gray-400' : overdue ? 'text-red-600' : 'text-gray-700'}">${check.name}</h4>
+                                    <p class="text-[11px] text-gray-400">${check.date} ${check.note ? '· ' + check.note : ''}</p>
+                                </div>
+                            </div>
+                            ${overdue ? '<span class="text-[10px] font-bold text-red-500 bg-red-50 px-2 py-1 rounded-full">逾期</span>' : ''}
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            window.toggleCheck = function(idx) {
+                checks[idx].done = !checks[idx].done;
+                DB.set('checks', checks);
+                renderChecks();
+                refreshHrtStats();
+            };
+
+            window.saveCheck = function() {
+                const name = document.getElementById('checkName').value;
+                if (!name) return alert('请输入检查项目');
+                checks.push({
+                    name,
+                    date: document.getElementById('checkDate').value,
+                    note: document.getElementById('checkNote').value,
+                    done: false
+                });
+                DB.set('checks', checks);
+                closeModal('modal-check');
+                renderChecks();
+                SoundManager.playSuccess();
+                refreshHrtStats();
+            };
+
+            // ========== 副作用记录 ==========
+            let sideEffects = DB.get('sideEffects', []);
+
+            function renderSideEffects() {
+                const list = document.getElementById('sideEffectList');
+                if (sideEffects.length === 0) {
+                    list.innerHTML = '<p class="text-center text-gray-400 text-xs py-4">暂无记录</p>';
+                    return;
+                }
+                list.innerHTML = sideEffects.slice().reverse().map(se => `
+                    <div class="bg-white/60 p-3 rounded-xl border border-gray-100">
+                        <div class="flex justify-between items-start">
+                            <span class="text-[10px] font-bold ${se.level==='severe'?'text-red-500':se.level==='moderate'?'text-orange-500':'text-green-500'} uppercase">${se.level==='severe'?'严重':se.level==='moderate'?'中等':'轻微'}</span>
+                            <span class="text-[10px] text-gray-400">${se.date}</span>
+                        </div>
+                        <p class="text-sm text-gray-700 mt-1">${se.text}</p>
+                    </div>
+                `).join('');
+            }
+
+            window.addSideEffect = function() {
+                const text = document.getElementById('sideEffectInput').value.trim();
+                if (!text) return;
+                sideEffects.push({
+                    text,
+                    level: document.getElementById('sideEffectLevel').value,
+                    date: new Date().toISOString().split('T')[0]
+                });
+                DB.set('sideEffects', sideEffects);
+                document.getElementById('sideEffectInput').value = '';
+                renderSideEffects();
+                SoundManager.playSuccess();
+            };
+
+            // ========== 身体变化追踪 ==========
+            const bodyItems = [
+                { key: 'skin', label: '皮肤细腻度', icon: 'sparkles' },
+                { key: 'breast', label: '胸部发育', icon: 'heart' },
+                { key: 'fat', label: '脂肪分布', icon: 'move' },
+                { key: 'hair', label: '体毛减少', icon: 'scissors' },
+                { key: 'face', label: '面部柔和度', icon: 'smile' },
+                { key: 'mood', label: '情绪稳定', icon: 'brain' },
+                { key: 'libido', label: '性欲变化', icon: 'flame' },
+                { key: 'odor', label: '体味变化', icon: 'wind' },
+            ];
+
+            function renderBodyTrack() {
+                const container = document.getElementById('bodyTrackList');
+                const current = DB.get('bodyTrack', {});
+                container.innerHTML = bodyItems.map(item => `
+                    <div>
+                        <div class="flex justify-between items-center mb-2">
+                            <label class="text-sm font-bold text-gray-700 flex items-center">
+                                <i data-lucide="${item.icon}" class="w-4 h-4 mr-2 text-pink-400"></i>${item.label}
+                            </label>
+                            <span class="text-xs font-bold text-pink-500" id="val-${item.key}">${current[item.key] || 0}/10</span>
+                        </div>
+                        <input type="range" min="0" max="10" value="${current[item.key] || 0}" 
+                            oninput="document.getElementById('val-${item.key}').innerText=this.value+'/10'"
+                            class="w-full" id="track-${item.key}">
+                    </div>
+                `).join('');
+                lucide.createIcons();
+            }
+
+            window.saveBodyTrack = function() {
+                const data = {};
+                bodyItems.forEach(item => {
+                    data[item.key] = parseInt(document.getElementById('track-' + item.key).value) || 0;
+                });
+                DB.set('bodyTrack', data);
+                SoundManager.playSuccess();
+                alert('身体变化记录已保存');
+            };
+
+            window.saveBodySize = function() {
+                const data = {
+                    weight: document.getElementById('bodyWeight').value,
+                    bust: document.getElementById('bodyBust').value,
+                    waist: document.getElementById('bodyWaist').value,
+                    hip: document.getElementById('bodyHip').value,
+                    date: new Date().toISOString().split('T')[0]
+                };
+                const history = DB.get('bodySizeHistory', []);
+                history.push(data);
+                DB.set('bodySizeHistory', history);
+                SoundManager.playSuccess();
+                alert('身体数据已保存');
+            };
+
+            // ========== 剂量计算器 ==========
+            window.calculateDose = function() {
+                const type = document.getElementById('calcType').value;
+                const dose = parseFloat(document.getElementById('calcDose').value);
+                const unit = document.getElementById('calcUnit').value;
+                if (!dose) return;
+                
+                let result = '';
+                const evEquiv = {
+                    'ev': dose,
+                    'gel': dose * 0.625,
+                    'patch': dose * 0.05,
+                    'cpa': 0,
+                    'spi': 0
+                };
+                
+                if (type === 'ev') {
+                    result = `<div class="text-3xl font-black text-pink-600">${dose} mg</div>
+                        <p class="text-sm text-gray-500 mt-2">口服戊酸雌二醇</p>
+                        <div class="mt-4 space-y-2 text-xs text-gray-600">
+                            <p>等效凝胶: ~${(dose/0.625).toFixed(1)}g</p>
+                            <p>等效贴片: ~${(dose/0.05).toFixed(1)}贴</p>
+                        </div>`;
+                } else if (type === 'gel') {
+                    result = `<div class="text-3xl font-black text-pink-600">${dose}g</div>
+                        <p class="text-sm text-gray-500 mt-2">雌二醇凝胶</p>
+                        <div class="mt-4 space-y-2 text-xs text-gray-600">
+                            <p>等效口服: ~${(dose*0.625).toFixed(1)}mg</p>
+                        </div>`;
+                } else if (type === 'patch') {
+                    result = `<div class="text-3xl font-black text-pink-600">${dose} 贴</div>
+                        <p class="text-sm text-gray-500 mt-2">雌二醇贴片</p>
+                        <div class="mt-4 space-y-2 text-xs text-gray-600">
+                            <p>等效口服: ~${(dose*0.05).toFixed(1)}mg</p>
+                        </div>`;
+                } else if (type === 'cpa') {
+                    result = `<div class="text-3xl font-black text-indigo-600">${dose} mg</div>
+                        <p class="text-sm text-gray-500 mt-2">色普龙 (醋酸环丙孕酮)</p>
+                        <div class="mt-4 text-xs text-gray-600">
+                            <p>常规抗雄剂量: 12.5-50mg/日</p>
+                            <p>注意: 高剂量可能增加抑郁和催乳素风险</p>
+                        </div>`;
+                } else if (type === 'spi') {
+                    result = `<div class="text-3xl font-black text-indigo-600">${dose} mg</div>
+                        <p class="text-sm text-gray-500 mt-2">螺内酯</p>
+                        <div class="mt-4 text-xs text-gray-600">
+                            <p>常规抗雄剂量: 100-200mg/日</p>
+                            <p>注意: 需监测血钾水平</p>
+                        </div>`;
+                }
+                
+                document.getElementById('calcResult').innerHTML = result;
+            };
+
+            // ========== BMI 计算器 ==========
+            window.calcBMI = function() {
+                const h = parseFloat(document.getElementById('bmiHeight').value) / 100;
+                const w = parseFloat(document.getElementById('bmiWeight').value);
+                if (!h || !w) return;
+                const bmi = (w / (h * h)).toFixed(1);
+                document.getElementById('bmiValue').innerText = bmi;
+                let status = '';
+                let color = '';
+                if (bmi < 18.5) { status = '偏瘦'; color = 'text-blue-500'; }
+                else if (bmi < 24) { status = '正常'; color = 'text-green-500'; }
+                else if (bmi < 28) { status = '超重'; color = 'text-orange-500'; }
+                else { status = '肥胖'; color = 'text-red-500'; }
+                document.getElementById('bmiStatus').innerHTML = `<span class="${color} font-bold">${status}</span>`;
+                document.getElementById('bmiResult').classList.remove('hidden');
+            };
+
+            // ========== 数据导入导出 ==========
+            window.exportData = function() {
+                const data = {
+                    version: '2.0',
+                    exportDate: new Date().toISOString(),
+                    hormone: hormoneData,
+                    meds: meds,
+                    medRecords: medRecords,
+                    checks: checks,
+                    sideEffects: sideEffects,
+                    bodyTrack: DB.get('bodyTrack', {}),
+                    bodySizeHistory: DB.get('bodySizeHistory', [])
+                };
+                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `mtf-hrt-backup-${new Date().toISOString().split('T')[0]}.json`;
+                a.click();
+                URL.revokeObjectURL(url);
+                SoundManager.playSuccess();
+            };
+
+            window.importData = function(input) {
+                const file = input.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const data = JSON.parse(e.target.result);
+                        if (data.hormone) DB.set('hormone', data.hormone);
+                        if (data.meds) DB.set('meds', data.meds);
+                        if (data.medRecords) DB.set('medRecords', data.medRecords);
+                        if (data.checks) DB.set('checks', data.checks);
+                        if (data.sideEffects) DB.set('sideEffects', data.sideEffects);
+                        if (data.bodyTrack) DB.set('bodyTrack', data.bodyTrack);
+                        if (data.bodySizeHistory) DB.set('bodySizeHistory', data.bodySizeHistory);
+                        alert('数据导入成功，页面将刷新');
+                        location.reload();
+                    } catch (err) {
+                        alert('导入失败，文件格式错误');
+                    }
+                };
+                reader.readAsText(file);
+            };
+            
+            // ========== 7. 药代动力学 (PK) 模拟器逻辑 ==========
+        let pkChartInstance = null;
+
+        // 根据药品自动过滤合法的给药途径
+        const routeMaps = {
+            ev: [
+                { value: "oral", label: "口服 (吞服)" },
+                { value: "sublingual", label: "舌下含服" },
+                { value: "gel", label: "透皮涂抹 (凝胶)" }
+            ],
+            een: [
+                { value: "injection", label: "肌肉/皮下注射" }
+            ],
+            cpa: [
+                { value: "oral", label: "口服" }
+            ],
+            spiro: [
+                { value: "oral", label: "口服" }
+            ]
+        };
+
+        window.adaptPkRoutes = function() {
+            const med = document.getElementById('pkMedType').value;
+            const routeSel = document.getElementById('pkRoute');
+            const routes = routeMaps[med] || [];
+            
+            routeSel.innerHTML = routes.map(r => `<option value="${r.value}">${r.label}</option>`).join('');
+            
+            // 设定不同药品的默认剂量与间隔
+            if (med === 'een') {
+                document.getElementById('pkDose').value = 5;
+                document.getElementById('pkInterval').value = 7;
+            } else if (med === 'cpa') {
+                document.getElementById('pkDose').value = 12.5;
+                document.getElementById('pkInterval').value = 1;
+            } else {
+                document.getElementById('pkDose').value = 2;
+                document.getElementById('pkInterval').value = 1;
+            }
+        };
+
+        // 药代理论数学公式：C(t) = Dose * (Ka / (Ka - Ke)) * (exp(-Ke * t) - exp(-Ka * t))
+        // 考虑多剂量周期性累加（14天，分辨率为每0.1天采样一个点）
+        window.simulatePharmacokinetics = function() {
+            const med = document.getElementById('pkMedType').value;
+            const route = document.getElementById('pkRoute').value;
+            const dose = parseFloat(document.getElementById('pkDose').value) || 0;
+            const interval = parseFloat(document.getElementById('pkInterval').value) || 1;
+
+            // 1. 核心物理参数配置：不同给药途径下的吸收常数 Ka 和 消除常数 Ke (单位: 1/天)
+            let Ka = 12.0; // 默认极快吸收 (口服)
+            let Ke = 0.8;  // 默认快速消除 (半衰期约 0.8 天)
+            let bioVal = 1.0; // 生物利用度修正
+            let yLabel = "血药浓度 (相对单位)";
+
+            if (med === 'ev') {
+                if (route === 'oral') { Ka = 12.0; Ke = 1.0; bioVal = 0.05; yLabel = "估算 E2 浓度 (pg/mL)"; } // 补佳乐口服吸收快，生物利用度低
+                else if (route === 'sublingual') { Ka = 24.0; Ke = 1.4; bioVal = 0.15; yLabel = "估算 E2 浓度 (pg/mL)"; } // 舌下含服峰值极高，衰减极快
+                else if (route === 'gel') { Ka = 1.5; Ke = 0.46; bioVal = 0.1; yLabel = "估算 E2 浓度 (pg/mL)"; } // 凝胶透皮吸收慢，血药浓度极平稳
+            } else if (med === 'een') {
+                Ka = 0.25; Ke = 0.08; bioVal = 1.0; yLabel = "估算 E2 浓度 (pg/mL)"; // EEn 注射吸收极慢，半衰期长达 8.5 天，蓄积效应强
+            } else if (med === 'cpa') {
+                Ka = 12.0; Ke = 0.4; bioVal = 0.9; yLabel = "色普龙浓度 (ng/mL)"; // CPA 半衰期约 1.7 天
+            } else if (med === 'spiro') {
+                Ka = 12.0; Ke = 0.8; bioVal = 0.6; yLabel = "螺内酯浓度 (ng/mL)"; // 螺内酯半衰期短
+            }
+
+            // 2. 仿真计算数据生成 (0 - 14天，步长 0.1 天)
+            const labels = [];
+            const dataPoints = [];
+            const steps = 140; // 14天 * 10 个点/天
+            
+            // 比例因子：将物理剂量折算成大约的血药浓度
+            const scale = med === 'ev' || med === 'een' ? 1200 * bioVal : 10 * bioVal;
+
+            for (let step = 0; step <= steps; step++) {
+                const t = step * 0.1; // 当前时间（天）
+                labels.push(`D${t.toFixed(1)}`);
+
+                // 累加历史上所有用药周期的贡献
+                let totalC = 0;
+                const numDoses = Math.floor(t / interval) + 1;
+                
+                for (let i = 0; i < numDoses; i++) {
+                    const t_dose = t - (i * interval); // 距离第 i 次给药过去的时间
+                    if (t_dose >= 0) {
+                        // 单剂量药代公式
+                        let val = (Ka / (Ka - Ke)) * (Math.exp(-Ke * t_dose) - Math.exp(-Ka * t_dose));
+                        if (val > 0) totalC += dose * val * scale;
+                    }
+                }
+                dataPoints.push(parseFloat(totalC.toFixed(1)));
+            }
+
+            // 3. 渲染或更新图表
+            const ctx = document.getElementById('pkChart').getContext('2d');
+            
+            // 区分深色模式的网格颜色
+            const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            const gridColor = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)';
+            const labelColor = isDark ? '#94a3b8' : '#6b7280';
+
+            if (pkChartInstance) {
+                pkChartInstance.data.labels = labels;
+                pkChartInstance.data.datasets[0].data = dataPoints;
+                pkChartInstance.data.datasets[0].label = yLabel;
+                pkChartInstance.options.scales.y.title.text = yLabel;
+                pkChartInstance.update();
+            } else {
+                pkChartInstance = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: yLabel,
+                            data: dataPoints,
+                            borderColor: '#ec4899',
+                            backgroundColor: 'rgba(236,72,153,0.1)',
+                            borderWidth: 2.5,
+                            tension: 0.35,
+                            fill: true,
+                            pointRadius: 0 // 隐藏圆点，折线更平滑
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            y: { 
+                                grid: { color: gridColor }, 
+                                ticks: { color: labelColor },
+                                title: { display: true, text: yLabel, color: labelColor, font: { size: 10 } }
+                            },
+                            x: { 
+                                grid: { display: false }, 
+                                ticks: { color: labelColor, maxTicksLimit: 14, font: { size: 9 } } 
+                            }
+                        }
+                    }
+                });
+            }
+            SoundManager.playSuccess();
+        };
+
+            // ========== 统计刷新 ==========
+            window.refreshHrtStats = function() {
+                const hrtStart = DB.get('hrtStart', null);
+                const daysEl = document.getElementById('hrtDays');
+                if (hrtStart) {
+                    const days = Math.floor((new Date() - new Date(hrtStart)) / (1000*60*60*24));
+                    daysEl.innerText = days;
+                } else {
+                    daysEl.innerText = '0';
+                }
+                
+                const today = new Date().toISOString().split('T')[0];
+                document.getElementById('medCount').innerText = (medRecords[today] || []).length + '/' + meds.length;
+                document.getElementById('checkCount').innerText = checks.filter(c => !c.done).length;
+                
+                const lastH = hormoneData[hormoneData.length - 1];
+                document.getElementById('lastE2').innerText = lastH && lastH.e2 ? lastH.e2 : '--';
+            };
+
+            // ========== Modal 控制 ==========
+            window.openModal = function(id) {
+                document.getElementById(id).classList.add('show');
+                if (id === 'modal-hormone') {
+                    document.getElementById('hormoneDate').value = new Date().toISOString().split('T')[0];
+                } else if (id === 'modal-check') {
+                    const d = new Date();
+                    d.setMonth(d.getMonth() + 3);
+                    document.getElementById('checkDate').value = d.toISOString().split('T')[0];
+                }
+            };
+            window.closeModal = function(id) {
+                document.getElementById(id).classList.remove('show');
+            };
+            document.querySelectorAll('.modal').forEach(m => {
+                m.addEventListener('click', function(e) {
+                    if (e.target === this) this.classList.remove('show');
+                });
+            });
+
+            // ========== 声音分析 ==========
+            const startBtn = document.getElementById('startMic');
+            let audioCtx, analyser, dataArray, source, isRec = false;
+            const voiceCanvas = document.getElementById('voiceCanvas');
+            const vCtx = voiceCanvas.getContext('2d');
+
+            function resizeVoiceCanvas() {
+                voiceCanvas.width = voiceCanvas.clientWidth || 300;
+                voiceCanvas.height = voiceCanvas.clientHeight || 96;
+            }
+            window.addEventListener('resize', resizeVoiceCanvas);
+            resizeVoiceCanvas();
+
+            startBtn.addEventListener('click', async function() {
+                if (isRec) {
+                    if (audioCtx) audioCtx.close();
+                    if (source) source.disconnect();
+                    isRec = false;
+                    startBtn.innerHTML = '<i data-lucide="play-circle" class="mr-2 w-5 h-5"></i> 开始分析';
+                    document.getElementById('freq-val').innerHTML = '--- <span class="text-lg text-gray-500 font-normal">Hz</span>';
+                    document.getElementById('freq-label').innerText = '点击下方按钮开始实时分析';
+                    document.getElementById('freq-label').className = 'text-sm text-gray-400 mb-6';
+                    lucide.createIcons();
+                    return;
+                }
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    audioCtx = new(window.AudioContext || window.webkitAudioContext)();
+                    analyser = audioCtx.createAnalyser();
+                    source = audioCtx.createMediaStreamSource(stream);
+                    source.connect(analyser);
+                    analyser.fftSize = 2048;
+                    dataArray = new Uint8Array(analyser.frequencyBinCount);
+                    isRec = true;
+                    startBtn.innerHTML = '<i data-lucide="stop-circle" class="mr-2 w-5 h-5"></i> 停止分析';
+                    lucide.createIcons();
+                    drawVoice();
+                } catch (e) {
+                    alert('无法访问麦克风，请检查权限设置。');
+                }
+            });
+
+            function drawVoice() {
+                if (!isRec) return;
+                requestAnimationFrame(drawVoice);
+                analyser.getByteFrequencyData(dataArray);
+                let maxVal = 0, maxIdx = 0;
+                const binCount = dataArray.length;
+                for (let i = 0; i < binCount; i++) {
+                    if (dataArray[i] > maxVal) { maxVal = dataArray[i]; maxIdx = i; }
+                }
+                if (maxVal > 30 && audioCtx) {
+                    const freq = Math.round(maxIdx * audioCtx.sampleRate / analyser.fftSize);
+                    document.getElementById('freq-val').innerHTML = `${freq} <span class="text-lg text-gray-500 font-normal">Hz</span>`;
+                    const label = document.getElementById('freq-label');
+                    if (freq > 185) { label.innerText = '✨ 女声范围'; label.className = 'text-pink-400 text-sm font-medium mb-6'; }
+                    else if (freq > 155) { label.innerText = '⚡ 中性范围'; label.className = 'text-purple-400 text-sm font-medium mb-6'; }
+                    else { label.innerText = '🔵 男声范围'; label.className = 'text-blue-400 text-sm font-medium mb-6'; }
+                }
+                vCtx.clearRect(0, 0, voiceCanvas.width, voiceCanvas.height);
+                const barWidth = Math.max(2, voiceCanvas.width / binCount * 2.5);
+                let x = 0;
+                for (let i = 0; i < binCount; i += 3) {
+                    const barHeight = (dataArray[i] / 255) * voiceCanvas.height * 0.8;
+                    const hue = 320 + (i / binCount) * 40;
+                    vCtx.fillStyle = `hsla(${hue}, 80%, 70%, 0.8)`;
+                    vCtx.fillRect(x, voiceCanvas.height - barHeight, barWidth, barHeight);
+                    x += barWidth + 1;
+                    if (x > voiceCanvas.width) break;
+                }
+            }
+            
+            // ========== 收藏夹核心逻辑 ==========
+        window.toggleBookmark = function(url, title) {
+            let bookmarks = DB.get('bookmarks', []);
+            const index = bookmarks.findIndex(b => b.url === url);
+
+            if (index > -1) {
+                // 如果已收藏，则取消
+                bookmarks.splice(index, 1);
+                SoundManager.playTone(440, 0.1); // 取消收藏的音效
+            } else {
+                // 如果未收藏，则添加
+                bookmarks.push({ 
+                    url, 
+                    title, 
+                    date: new Date().toLocaleDateString() 
+                });
+                SoundManager.playSuccess(); // 成功收藏的音效
+            }
+
+            DB.set('bookmarks', bookmarks);
+            window.renderBookmarks(); // 刷新主页列表
+            
+            // 如果在搜索页面点收藏，手动刷新一下按钮颜色（可选，建议直接重新 render）
+            if (currentTab === 'tab-search') performGlobalSearch(currentPage); 
+        };
+
+        window.renderBookmarks = function() {
+            const list = DB.get('bookmarks', []);
+            const container = document.getElementById('bookmarkList');
+            const countEl = document.getElementById('bookmarkCount');
+            
+            if (countEl) countEl.innerText = list.length;
+            
+            if (list.length === 0) {
+                container.innerHTML = '<p class="text-xs text-gray-400 text-center py-6">暂无收藏</p>';
+                return;
+            }
+
+            container.innerHTML = list.slice().reverse().map(b => `
+                <div class="flex items-center justify-between p-3 bg-white/40 rounded-2xl border border-white/50 card-hover">
+                    <a href="${b.url}" target="_blank" class="flex-1 truncate mr-4">
+                        <p class="text-xs font-bold text-gray-700 truncate">${b.title}</p>
+                        <p class="text-[9px] text-gray-400 mt-0.5">收藏于 ${b.date}</p>
+                    </a>
+                    <button onclick="toggleBookmark('${b.url}', '')" class="text-red-300 hover:text-red-500 p-2">
+                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            `).join('');
+            
+            if (window.lucide) lucide.createIcons();
+        };
+        
+            // 激素换算逻辑
+          // ========== 7.5 高阶多指标单位换算逻辑 ==========
+        
+        // 1. 定义每种激素支持的单位和换算系数（均以 base 动力量学单位为基准）
+        const convSchema = {
+            E2: {
+                base: "pg/mL",
+                units: {
+                    "pg/mL": 1.0,
+                    "pmol/L": 3.67,
+                    "ng/L": 1.0
+                }
+            },
+            T: {
+                base: "ng/dL",
+                units: {
+                    "ng/dL": 1.0,
+                    "nmol/L": 0.0347,
+                    "ng/mL": 0.01  // 1 ng/mL = 100 ng/dL
+                }
+            },
+            PRL: {
+                base: "ng/mL",
+                units: {
+                    "ng/mL": 1.0,
+                    "μIU/mL": 21.2,
+                    "mIU/L": 21.2
+                }
+            },
+            P4: {
+                base: "ng/mL",
+                units: {
+                    "ng/mL": 1.0,
+                    "nmol/L": 3.18
+                }
+            },
+            FSH: {
+                base: "mIU/mL",
+                units: {
+                    "mIU/mL": 1.0,
+                    "IU/L": 1.0
+                }
+            },
+            LH: {
+                base: "mIU/mL",
+                units: {
+                    "mIU/mL": 1.0,
+                    "IU/L": 1.0
+                }
+            }
+        };
+
+        // 当切换激素类型时，动态更新单位下拉框
+        window.onConvTypeChange = function() {
+            const type = document.getElementById('convType').value;
+            const fromSel = document.getElementById('convFromUnit');
+            const toSel = document.getElementById('convToUnit');
+            const schema = convSchema[type];
+
+            if (!schema) return;
+
+            const unitKeys = Object.keys(schema.units);
+            
+            // 填充原始单位和目标单位
+            fromSel.innerHTML = unitKeys.map(k => `<option value="${k}">${k}</option>`).join('');
+            toSel.innerHTML = unitKeys.map(k => `<option value="${k}">${k}</option>`).join('');
+
+            // 默认让目标单位选第二个（防止一进来两个单位相同显示 1.0）
+            if (unitKeys.length > 1) {
+                toSel.selectedIndex = 1;
+            }
+
+            // 清空并重新计算
+            document.getElementById('convInput').value = "";
+            document.getElementById('convOutput').value = "";
+        };
+
+        // 核心换算算法：D_target = D_source * (Factor_target / Factor_source)
+        window.calculateConversion = function() {
+            const type = document.getElementById('convType').value;
+            const val = parseFloat(document.getElementById('convInput').value);
+            const fromUnit = document.getElementById('convFromUnit').value;
+            const toUnit = document.getElementById('convToUnit').value;
+            
+            const outputEl = document.getElementById('convOutput');
+
+            if (isNaN(val)) {
+                outputEl.value = "";
+                return;
+            }
+
+            const schema = convSchema[type];
+            if (!schema) return;
+
+            const factorFrom = schema.units[fromUnit];
+            const factorTo = schema.units[toUnit];
+
+            // 换算公式
+            const result = val * (factorTo / factorFrom);
+            
+            // 格式化输出精度
+            if (type === 'T' && toUnit === 'nmol/L') {
+                outputEl.value = result.toFixed(3); // 睾酮的 nmol/L 需要三位精度
+            } else {
+                outputEl.value = result.toFixed(2);
+            }
+        };
+
+        // ========== 远程更新检测逻辑 ==========
+        const CURRENT_VERSION = "2.7.0"; // 【当前版本号】每次发布新版记得改这里
+        
+        // 这里的地址可以换成你的 Vercel 地址，或者 GitHub Pages 的地址
+        const UPDATE_JSON_URL = "https://raw.githubusercontent.com/xiaosusu456-ui/MTF-world/main/version.json";
+
+        window.checkAppUpdate = async function() {
+            try {
+                // 1. 获取云端的版本配置
+                const response = await fetch(UPDATE_JSON_URL);
+                if (!response.ok) return;
+                const data = await response.json();
+
+                // 2. 比较版本号 (例如 "2.6.0" > "2.5.0")
+                if (compareVersions(data.version, CURRENT_VERSION) > 0) {
+                    showUpdateNotice(data);
+                }
+            } catch (e) {
+                console.log("更新检测失败，可能是网络问题:", e);
+            }
+        };
+
+        // 比较版本号算法
+        function compareVersions(v1, v2) {
+            const parts1 = v1.split('.').map(Number);
+            const parts2 = v2.split('.').map(Number);
+            for (let i = 0; i < Math.max(parts1.length, parts2.length); i++) {
+                const p1 = parts1[i] || 0;
+                const p2 = parts2[i] || 0;
+                if (p1 > p2) return 1;
+                if (p1 < p2) return -1;
+            }
+            return 0;
+        }
+
+        function showUpdateNotice(data) {
+            document.getElementById('updateTitle').innerText = data.title;
+            document.getElementById('updateLink').href = data.downloadUrl;
+            
+            // 写入更新日志
+            const logContainer = document.getElementById('updateChangelog');
+            logContainer.innerHTML = data.changelog.map(line => `<p class="leading-relaxed">${line}</p>`).join('');
+            
+            // 显示弹窗
+            document.getElementById('updateModal').classList.remove('hidden');
+            if (window.lucide) lucide.createIcons();
+        }
+
+        window.closeUpdateModal = function() {
+            document.getElementById('updateModal').classList.add('hidden');
+        };
+
+// ========== 每日鼓励语库 (v2.5 扩充版) ==========
+        const quotes = [
+            // --- 关于耐心与时间 ---
+            "蜕变需要时间，蝴蝶也不是一天飞出来的。",
+            "每一粒‘糖’，都是写给未来的情书。",
+            "时间是最好的魔术师，请给它一点耐心。",
+            "现在的每一份等待，都会在镜子中得到答案。",
+            "激素的魔法很慢，但它从未停止脚步。",
+            "不要因为走得慢而焦虑，你已经在路上了。",
+            "发育是一个漫长的春天，花开总有先后。",
+            "种子在土里积蓄力量时，外面是看不见的。",
+            "温柔地对待生长的每一天，不要急于求成。",
+            "过渡期虽然漫长，但风景一直在变美。",
+            
+            // --- 关于自我认同与勇气 ---
+            "你不需要成为完美的女性，你只需要成为你自己。",
+            "勇敢做自己的你，比任何光芒都耀眼。",
+            "这世界上只有一种英雄主义，就是认清生活的真相后依然爱自己。",
+            "你的存在本身，就是一种了不起的勇气。",
+            "灵魂没有性别，它只负责闪光。",
+            "不要让别人的定义，遮住了你内心的色彩。",
+            "你本就是明珠，只是正在擦去岁月的浮尘。",
+            "定义你的不是染色体，而是你对生活的爱。",
+            "这世界因多样而美丽，你也是其中最独特的一抹色。",
+            "听从内心的召唤，那是你通往自由的坐标。",
+
+            // --- 关于温柔与自爱 ---
+            "今天也要记得多喝水，按时吃饭，好好爱自己。",
+            "累了就停下来休息，你是被允许软弱的。",
+            "镜子里的那个女孩子，值得你所有的温柔。",
+            "睡个好觉，梦里会有更美的自己。",
+            "买一件喜欢的裙子，奖励一下这么努力的你吧。",
+            "你是自己生命里的公主，也是守护自己的骑士。",
+            "不要对自己太苛刻，你已经做得很棒了。",
+            "今天的心情是粉色的吗？如果不开心，就给自己一个拥抱。",
+            "即使世界偶尔冰冷，你内心也要保留一处暖阳。",
+            "温柔地呼吸，感受身体每一寸细微的变化。",
+
+            // --- 关于未来与希望 ---
+            "愿你历经千帆，归来仍是那个纯粹的少女。",
+            "星光不问赶路人，时光不负追梦儿。",
+            "所有的苦难都会化作勋章，挂在未来的裙摆上。",
+            "你正在亲手画出人生最美的底色。",
+            "终有一天，你可以穿着喜欢的衣服，在阳光下自在奔跑。",
+            "现在的辛苦，都是为了在那一天能笑得更灿烂。",
+            "未来的你会感谢现在坚持的自己。",
+            "风会吹散阴霾，阳光会照亮你的每一根发丝。",
+            "在这场名为自我的长征里，你已经赢了一半。",
+            "愿你的生活，像晚霞一样绚烂，像晨曦一样充满希望。",
+
+            // --- 治愈系短句 ---
+            "你好，漂亮的姑娘。",
+            "今天也是元气满满的一天呢！",
+            "记得微笑，那是你最好的化妆品。",
+            "每一天都是新的蜕变。",
+            "世界很美，而你也是。",
+            "悄悄拔尖，然后惊艳所有人。",
+            "做个自由自在的小仙女吧。",
+            "生活虽苦，但你有甜甜的心。",
+            "你是这世间最温柔的奇迹。",
+            "晚安，好梦，梦里有花开。",
+            "心怀热爱，奔赴山海。",
+            "你要相信，美好的事情即将发生。",
+            "今天也要记得服用你的‘魔法’哦。",
+            "皮肤变软了一点点，发现了吗？",
+            "眼神里的光，是骗不了人的。",
+            "愿你被这世界温柔以待。",
+            "做自己的英雄，也做自己的小公举。",
+            "你的美，由内而外，自然流露。",
+            "无论在哪，都要记得发光。",
+            "你是最美的，不接受反驳。"
+        ];
+
+        
+
+            function initQuotes() {
+    const el = document.getElementById('dailyQuote');
+    if (el) {
+        el.innerText = quotes[Math.floor(Math.random() * quotes.length)];
+        el.classList.remove('opacity-0');
+    }
+}
+            // ========== 2.5 历史搜索逻辑 (V2.6 新增) ==========
+        window.saveSearchHistory = function(query) {
+            if (!query) return;
+            let history = DB.get('search_history', []);
+            const idx = history.indexOf(query);
+            if (idx > -1) history.splice(idx, 1);
+            history.unshift(query);
+            if (history.length > 5) history.pop();
+            DB.set('search_history', history);
+            window.renderSearchHistory();
+        };
+
+        window.renderSearchHistory = function() {
+            const history = DB.get('search_history', []);
+            const container = document.getElementById('historyContainer');
+            const listEl = document.getElementById('searchHistory');
+            if (!container || !listEl) return;
+            if (history.length === 0) {
+                container.classList.add('hidden');
+                return;
+            }
+            container.classList.remove('hidden');
+            listEl.innerHTML = history.map(q => {
+                const safeQ = q.replace(/'/g, "\\'");
+                return '<button onclick="searchByHistory(\'' + safeQ + '\')" class="px-3 py-1 rounded-xl bg-white/30 text-gray-600 dark:text-gray-300 text-[10px] font-bold border border-white/20 active:scale-95 transition-all"># ' + q + '</button>';
+            }).join('');
+        };
+
+        window.clearSearchHistory = function() {
+            DB.set('search_history', []);
+            window.renderSearchHistory();
+            if (window.SoundManager) SoundManager.playClick();
+        };
+
+        window.searchByHistory = function(query) {
+            const input = document.getElementById('globalSearchInput');
+            if (input) {
+                input.value = query;
+                window.performGlobalSearch(0);
+            }
+        };
+
+            // ========== 初始化 ==========
+            window.addEventListener('load', () => {
+                window.initPrivacyLock();
+            
+                window.checkAppUpdate()
+                window.adaptPkRoutes();
+                window.onConvTypeChange();
+                window.renderSearchHistory();
+                window.renderBookmarks();
+                initQuotes();
+                lucide.createIcons();
+                initHormoneChart();
+                renderMeds();
+                renderChecks();
+                renderSideEffects();
+                renderBodyTrack();
+                renderCalendar();
+                refreshHrtStats();
+                
+                // 首次访问设置 HRT 开始日期
+                if (!DB.get('hrtStart', null)) {
+                    const saved = localStorage.getItem('hrt_v2');
+                    if (saved) {
+                        // 兼容旧数据
+                        const oldData = JSON.parse(saved);
+                        if (oldData.length > 0) {
+                            // 不自动设置，让用户自己决定
+                        }
+                    }
+                }
+                
+                // 显示首页动画
+                setTimeout(() => {
+                    document.querySelector('#tab-home').classList.add('show');
+                }, 50);
+            });
+
+            // 音频上下文恢复
+            document.addEventListener('click', function resumeAudio() {
+                if (SoundManager.ctx && SoundManager.ctx.state === 'suspended') {
+                    SoundManager.ctx.resume();
+                }
+            }, { once: true });
+
+        })();
+        
+        // ========== 资源搜索逻辑 (大批量预取 + 缓存 + 双模并发) ==========
+        let searchCache = {};       
+        let globalDataStorage = []; 
+        let currentParams = {};     
+        const UI_PAGE_SIZE = 10;
+
+        window.performGlobalSearch = async function(page = 0) {
+            const query = document.getElementById('globalSearchInput').value.trim();
+            if (!query) return;
+
+            // 1. 读取极速开关状态，动态决定单次请求的数量
+            const isSpeedMode = document.getElementById('speedModeToggle')?.checked || false;
+            const batchSize = isSpeedMode ? 40 : 20; // 极速模式一次拿 40 条，普通模式拿 20 条
+            const searchMode = isSpeedMode ? 'speed' : 'quota';
+
+            const newParams = {
+                q: query,
+                lang: document.getElementById('filterLang').value,
+                script: document.getElementById('filterScript').value,
+                domain: document.getElementById('filterDomain').value.trim(),
+                tags: document.getElementById('filterTags').value.trim(),
+                limit: batchSize,  // 动态 limit
+                mode: searchMode   // 动态 mode
+            };
+
+            const cacheKey = JSON.stringify(newParams);
+
+            if (cacheKey !== JSON.stringify(currentParams) || page === 0) {
+                currentParams = newParams;
+                globalDataStorage = searchCache[cacheKey] || [];
+            }
+
+            const startIndex = page * UI_PAGE_SIZE;
+            const endIndex = startIndex + UI_PAGE_SIZE;
+
+            if (globalDataStorage.length >= endIndex) {
+                renderFromStorage(page);
+                return;
+            }
+
+            document.getElementById('globalResults').innerHTML = `
+                <div class="text-center py-20">
+                    <div class="inline-block animate-spin rounded-full h-8 w-8 border-4 border-pink-500 border-t-transparent mb-4"></div>
+                    <p class="text-pink-400 text-xs font-bold animate-pulse tracking-widest">
+                        ${isSpeedMode ? '极速搜索中...' : '普通搜索中...'}
+                    </p>
+                </div>`;
+
+            try {
+                const urlParams = new URLSearchParams({
+                    ...currentParams,
+                    offset: globalDataStorage.length
+                });
+
+                const response = await fetch(`https://mtf-world.vercel.app/search?${urlParams.toString()}`);
+                const data = await response.json();
+                const newResults = data.results || [];
+
+                globalDataStorage = globalDataStorage.concat(newResults);
+                searchCache[cacheKey] = globalDataStorage;
+                
+                renderFromStorage(page);
+                if (page === 0) {
+                window.saveSearchHistory(query);
+            }
+                
+
+            } catch (error) {
+                document.getElementById('globalResults').innerHTML = `<div class="text-red-400 text-center py-10">搜索失败: ${error.message}</div>`;
+            }
+        };
+
+        function renderFromStorage(page) {
+            const container = document.getElementById('globalResults');
+            const start = page * UI_PAGE_SIZE;
+            const list = globalDataStorage.slice(start, start + UI_PAGE_SIZE);
+
+            if (list.length === 0 && page === 0) {
+                container.innerHTML = '<div class="glass p-10 text-center rounded-3xl text-gray-400">未找到相关资源</div>';
+                return;
+            }
+
+            container.innerHTML = list.map(item => `
+    <div class="glass p-5 rounded-2xl mb-4 border-l-4 border-pink-400 card-hover animate-in fade-in zoom-in-95 duration-300">
+        <div class="flex justify-between items-start mb-2">
+            <h4 class="font-bold text-gray-800 text-sm">
+                <a href="${item.url}" target="_blank" class="hover:text-pink-600 transition-colors">
+                    ${item._formatted?.title || item.title}
+                </a>
+            </h4>
+            <div class="flex items-center space-x-2">
+                <button onclick="event.stopPropagation(); toggleBookmark('${item.url}', '${(item._formatted?.title || item.title).replace(/'/g, "\\'")}')" 
+                        class="p-1 hover:bg-yellow-50/10 rounded-lg transition-all">
+                    <i data-lucide="star" class="w-4 h-4 text-pink-300"></i>
+                </button>
+                <span class="text-[9px] font-bold text-pink-400/60 uppercase shrink-0">${item.domain}</span>
+            </div>
+        </div>
+        
+        <div class="text-[11px] text-gray-500 leading-relaxed search-content">
+            ${item._formatted?.content || item.content}
+        </div>
+
+        <div class="flex flex-wrap gap-2 mt-4">
+            ${(item.tags || []).slice(0, 3).map(tag => `
+                <span class="px-2 py-0.5 rounded-md bg-pink-500/10 text-pink-300 text-[9px] font-bold border border-pink-500/20">
+                    # ${tag}
+                </span>
+            `).join('')}
+        </div>
+    </div>
+`).join('');
+
+            const hasMore = (globalDataStorage.length > (page + 1) * UI_PAGE_SIZE) || (list.length === UI_PAGE_SIZE);
+            renderPagination(page, hasMore);
+            if (window.lucide) window.lucide.createIcons();
+            const searchBox = document.querySelector('#tab-search .glass');
+            if (searchBox && page > 0) searchBox.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+        
+
+        // ========== 4. 分页逻辑 ==========
+        function renderPagination(currentPage, hasMore) {
+            const container = document.getElementById('pagination');
+            let html = '';
+            if (currentPage > 0) {
+                html += `<button onclick="performGlobalSearch(${currentPage - 1})" class="w-10 h-10 glass rounded-xl flex items-center justify-center text-pink-500"><i data-lucide="chevron-left"></i></button>`;
+            }
+            html += `<span class="px-6 py-2 glass-strong rounded-xl text-pink-600 font-black text-sm">${currentPage + 1}</span>`;
+            if (hasMore) {
+                html += `<button onclick="performGlobalSearch(${currentPage + 1})" class="w-10 h-10 glass rounded-xl flex items-center justify-center text-pink-500"><i data-lucide="chevron-right"></i></button>`;
+            }
+            container.innerHTML = html;
+            container.classList.remove('hidden');
+            if (window.lucide) window.lucide.createIcons();
+        }
+        
+        
+
+        // ========== 5. 事件绑定 ==========
+        document.getElementById('globalSearchInput')?.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') performGlobalSearch(0);
+        });
+        
+        
+    </script>
+</body>
+</html>
